@@ -1,0 +1,2687 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>指導予約システム</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7F6F2;--sf:#fff;--sf2:#F0EEE8;--bd:#E2DFD6;
+  --tx:#1A1A18;--tx2:#6B6860;--tx3:#9B9890;
+  --gr:#2A5C45;--gr-l:#E8F2EC;--gr-b:#b8dbc6;
+  --rd:#C84B2F;--rd-l:#FAEAE6;--rd-b:#f0b9ae;
+  --am:#B8860B;--am-l:#FDF6E3;--am-b:#e8d08a;
+  --bl:#1a5fa8;--bl-l:#e8f0fb;--bl-b:#b8d0f0;
+  --pu:#6b3fa0;--pu-l:#f3eefa;--pu-b:#d4b8f0;
+  --mn:'DM Mono',monospace;--sn:'Noto Sans JP',sans-serif;
+  --r:8px;--rl:14px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sn);background:var(--bg);color:var(--tx);min-height:100vh;font-size:14px;line-height:1.5;}
+
+/* LAYOUT */
+#app{display:flex;min-height:100vh;}
+#sb{width:220px;min-width:220px;background:#1a1a18;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0;}
+#sb .logo{padding:18px 18px 14px;border-bottom:1px solid #2e2e2c;}
+#sb .logo h1{font-size:14px;font-weight:700;color:#fff;letter-spacing:.04em;}
+#sb .logo p{font-size:11px;color:#777;margin-top:2px;}
+#sb nav{padding:10px 10px;flex:1;}
+#sb nav button{width:100%;text-align:left;background:none;border:none;color:#aaa;font-size:13px;font-family:var(--sn);padding:8px 12px;border-radius:var(--r);cursor:pointer;margin-bottom:2px;transition:background .12s,color .12s;display:flex;align-items:center;gap:9px;}
+#sb nav button:hover{background:#2a2a28;color:#fff;}
+#sb nav button.active{background:var(--gr);color:#fff;}
+#sb .su{padding:12px 16px 14px;border-top:1px solid #2e2e2c;}
+#sb .su p{font-size:11px;color:#777;margin-bottom:2px;}
+#sb .su .sn{font-size:13px;color:#fff;font-weight:500;display:block;margin-bottom:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#sb .sl{width:100%;background:none;border:1px solid #3a3a38;color:#aaa;font-size:12px;font-family:var(--sn);padding:6px 10px;border-radius:var(--r);cursor:pointer;}
+#sb .sl:hover{border-color:#777;color:#fff;}
+#main{flex:1;display:flex;flex-direction:column;min-width:0;}
+#topbar{background:var(--sf);border-bottom:1px solid var(--bd);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;}
+#topbar h2{font-size:17px;font-weight:700;}
+#topbar .tm{font-size:12px;color:var(--tx2);}
+#ct{flex:1;padding:22px 24px;overflow-y:auto;}
+
+/* LOGIN */
+#ls{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px;}
+.lc{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);padding:36px;width:100%;max-width:400px;}
+.lc h1{font-size:21px;font-weight:700;margin-bottom:5px;}
+.lc-sub{font-size:13px;color:var(--tx2);margin-bottom:20px;}
+.rtabs{display:flex;border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:18px;}
+.rtabs button{flex:1;padding:8px;border:none;background:transparent;font-size:13px;font-family:var(--sn);cursor:pointer;color:var(--tx2);transition:background .12s,color .12s;}
+.rtabs button.on{background:#1a1a18;color:#fff;}
+
+/* FORMS */
+.fg{margin-bottom:13px;}
+.fg label{display:block;font-size:12px;font-weight:500;color:var(--tx2);margin-bottom:4px;letter-spacing:.03em;}
+.fg input,.fg select,.fg textarea{width:100%;padding:9px 11px;border:1px solid var(--bd);border-radius:var(--r);font-size:14px;font-family:var(--sn);background:var(--bg);color:var(--tx);outline:none;transition:border-color .12s;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--gr);}
+.fg textarea{resize:vertical;min-height:60px;}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;}
+.err{font-size:12px;color:var(--rd);margin-top:5px;min-height:16px;}
+.pw-w{position:relative;display:flex;}
+.pw-w input{flex:1;padding-right:38px;}
+.pw-eye{position:absolute;right:0;top:0;bottom:0;width:36px;background:none;border:none;cursor:pointer;color:var(--tx3);font-size:15px;display:flex;align-items:center;justify-content:center;}
+.pw-eye:hover{color:var(--tx2);}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;border-radius:var(--r);font-family:var(--sn);cursor:pointer;font-size:13px;transition:opacity .12s,background .12s,color .12s,border-color .12s;white-space:nowrap;padding:8px 14px;border:none;}
+.btn-dk{background:#1a1a18;color:#fff;}
+.btn-dk:hover{opacity:.82;}
+.btn-dk.full{width:100%;padding:11px;font-size:14px;}
+.btn-gh{background:transparent;color:var(--tx);border:1px solid var(--bd);}
+.btn-gh:hover{border-color:var(--tx);}
+.btn-gn{background:var(--gr-l);color:var(--gr);border:1px solid var(--gr-b);}
+.btn-gn:hover{background:var(--gr);color:#fff;}
+.btn-rd{background:var(--rd-l);color:var(--rd);border:1px solid var(--rd-b);}
+.btn-rd:hover{background:var(--rd);color:#fff;}
+.btn-bl{background:var(--bl-l);color:var(--bl);border:1px solid var(--bl-b);}
+.btn-bl:hover{background:var(--bl);color:#fff;}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.btn-xs{padding:3px 8px;font-size:11px;}
+
+/* BADGES */
+.bx{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
+.bx-gn{background:var(--gr-l);color:var(--gr);}
+.bx-rd{background:var(--rd-l);color:var(--rd);}
+.bx-am{background:var(--am-l);color:var(--am);}
+.bx-gy{background:var(--sf2);color:var(--tx2);}
+.bx-bl{background:var(--bl-l);color:var(--bl);}
+.bx-pu{background:var(--pu-l);color:var(--pu);}
+
+/* CARDS */
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);overflow:hidden;margin-bottom:16px;}
+.ch{padding:13px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.ch h3{font-size:14px;font-weight:700;}
+.cb{padding:18px;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:16px;}
+.st{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);padding:13px 16px;}
+.st .lb{font-size:11px;color:var(--tx2);font-weight:500;letter-spacing:.04em;margin-bottom:3px;}
+.st .vl{font-size:24px;font-weight:700;font-family:var(--mn);}
+
+/* INFO ROW */
+.ir{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--bd);}
+.ir:last-child{border-bottom:none;}
+.ir-l{font-size:11px;color:var(--tx3);min-width:90px;padding-top:1px;font-weight:500;flex-shrink:0;}
+.ir-v{font-size:13px;flex:1;min-width:0;}
+
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal{background:var(--sf);border-radius:var(--rl);width:100%;max-width:520px;max-height:92vh;overflow-y:auto;padding:24px;position:relative;}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:3px;padding-right:26px;}
+.modal .ms{font-size:12px;color:var(--tx2);margin-bottom:14px;}
+.mc{position:absolute;top:12px;right:14px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx2);padding:4px;}
+.mc:hover{color:var(--tx);}
+.ma{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap;}
+.div{border:none;border-top:1px solid var(--bd);margin:13px 0;}
+
+/* CALENDAR */
+.cal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+.cnav{display:flex;gap:6px;align-items:center;}
+.cnav button{background:var(--sf);border:1px solid var(--bd);width:29px;height:29px;border-radius:var(--r);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.cnav button:hover{background:var(--sf2);}
+.cnav span{font-size:14px;font-weight:700;min-width:130px;text-align:center;}
+.ttabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+.ttab{padding:6px 13px;border-radius:20px;border:1px solid var(--bd);background:var(--sf);font-size:13px;cursor:pointer;transition:all .12s;color:var(--tx2);}
+.ttab:hover{border-color:var(--gr);color:var(--gr);}
+.ttab.on{background:var(--gr);color:#fff;border-color:var(--gr);}
+.ti-btn{padding:4px 9px;font-size:11px;background:var(--bl-l);color:var(--bl);border:1px solid var(--bl-b);border-radius:20px;cursor:pointer;}
+.ti-btn:hover{background:var(--bl);color:#fff;}
+.cgrid{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);overflow:hidden;}
+.cgh{display:grid;grid-template-columns:74px repeat(7,minmax(0,1fr));background:var(--sf2);border-bottom:1px solid var(--bd);}
+.cgh>div{padding:8px 4px;text-align:center;font-size:11px;font-weight:500;color:var(--tx2);}
+.cgh>div.tod{color:var(--gr);font-weight:700;}
+.cgr{display:grid;grid-template-columns:74px repeat(7,minmax(0,1fr));border-bottom:1px solid var(--bd);}
+.cgr:last-child{border-bottom:none;}
+.cgt{padding:5px 3px;font-size:10px;color:var(--tx3);font-family:var(--mn);display:flex;align-items:center;justify-content:center;border-right:1px solid var(--bd);background:var(--sf2);text-align:center;line-height:1.3;}
+.cgc{padding:4px;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--bd);min-height:64px;}
+.cgc:last-child{border-right:none;}
+.sb{width:100%;padding:5px 3px;border-radius:6px;text-align:center;font-size:10px;font-weight:500;line-height:1.35;border:1px solid transparent;}
+.sb-e{background:var(--gr-l);color:var(--gr);border-color:var(--gr-b);cursor:pointer;}
+.sb-e:hover{background:var(--gr);color:#fff;}
+.sb-f{background:var(--rd-l);color:var(--rd);border-color:var(--rd-b);}
+.sb-m{background:var(--am-l);color:var(--am);border-color:var(--am-b);cursor:pointer;}
+.sb-m:hover{background:#f0e088;}
+.sb-p{background:var(--sf2);color:var(--tx3);border-color:var(--bd);}
+.sb-o{background:var(--bg);color:var(--tx3);border:1px dashed var(--bd);font-size:9px;}
+.legend{display:flex;gap:11px;flex-wrap:wrap;font-size:12px;color:var(--tx2);margin-top:9px;align-items:center;}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl th{text-align:left;padding:9px 12px;font-size:11px;font-weight:500;color:var(--tx2);letter-spacing:.04em;border-bottom:1px solid var(--bd);background:var(--sf2);white-space:nowrap;}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--bd);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--sf2);}
+.tbl th[onclick]{cursor:pointer;}
+.tbl th[onclick]:hover{background:var(--sf2);}
+
+/* CHIPS */
+.chips{display:flex;flex-wrap:wrap;gap:5px;padding:8px;border:1px solid var(--bd);border-radius:var(--r);background:var(--bg);}
+.chip{padding:3px 9px;border-radius:20px;font-size:12px;border:1px solid var(--bd);cursor:pointer;background:var(--sf);}
+.chip.on{background:var(--gr);color:#fff;border-color:var(--gr);}
+
+/* SEARCH */
+.sbar{display:flex;gap:10px;flex-wrap:wrap;background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);padding:14px;margin-bottom:14px;align-items:flex-end;}
+.sbar .fg{margin-bottom:0;flex:1;min-width:130px;}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+.tc{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);padding:15px;}
+.tc h4{font-size:14px;font-weight:700;margin-bottom:6px;}
+.stags{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0;}
+.stag{padding:2px 7px;background:var(--gr-l);color:var(--gr);border-radius:12px;font-size:11px;font-weight:500;}
+.stag.hl{background:var(--gr);color:#fff;}
+
+/* STUDENT DB */
+.grade-tree{display:flex;flex-direction:column;gap:10px;}
+.grade-block{border:1px solid var(--bd);border-radius:var(--rl);overflow:hidden;}
+.grade-head{padding:11px 16px;background:var(--sf2);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+.grade-head h4{font-size:14px;font-weight:700;}
+.grade-body{padding:14px 16px;display:none;}
+.grade-body.open{display:block;}
+.class-block{margin-bottom:12px;}
+.class-head{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:var(--bl-l);border-radius:var(--r);margin-bottom:6px;}
+.class-head span{font-size:13px;font-weight:500;color:var(--bl);}
+.student-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:5px;}
+.stu-item{display:flex;align-items:center;gap:8px;padding:5px 9px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);font-size:12px;}
+.stu-id{font-family:var(--mn);font-size:11px;color:var(--tx3);}
+
+/* TUTOR SCHEDULE EDITOR */
+.sch-week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:12px;}
+.sch-day{border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;}
+.sch-day-head{padding:6px 8px;text-align:center;font-size:12px;font-weight:500;background:var(--sf2);border-bottom:1px solid var(--bd);}
+.sch-day-head.work{background:var(--gr-l);color:var(--gr);}
+.sch-day-head.off{background:var(--sf2);color:var(--tx3);}
+.sch-day-body{padding:7px;}
+.sch-slot{background:var(--gr-l);border:1px solid var(--gr-b);border-radius:5px;padding:4px 6px;margin-bottom:4px;font-size:11px;color:var(--gr);display:flex;align-items:center;justify-content:space-between;}
+.sch-slot button{background:none;border:none;cursor:pointer;color:var(--rd);font-size:13px;padding:0 2px;line-height:1;}
+.add-slot-btn{width:100%;padding:4px;font-size:11px;background:transparent;border:1px dashed var(--bd);border-radius:5px;cursor:pointer;color:var(--tx3);}
+.add-slot-btn:hover{border-color:var(--gr);color:var(--gr);}
+
+/* OVERRIDE PANEL */
+.override-list{display:flex;flex-direction:column;gap:6px;}
+.ov-item{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--am-l);border:1px solid var(--am-b);border-radius:var(--r);font-size:12px;}
+.ov-item .ov-date{font-family:var(--mn);font-size:11px;color:var(--am);min-width:80px;}
+.ov-item .ov-slots{flex:1;display:flex;flex-wrap:wrap;gap:4px;}
+.ov-item button{background:none;border:none;cursor:pointer;color:var(--rd);font-size:14px;}
+
+@media(max-width:800px){
+  #sb{width:52px;min-width:52px;}
+  #sb .logo p,#sb nav button span,#sb .su .sn,#sb .su p,#sb .sl{display:none;}
+  #sb .logo h1{font-size:9px;}
+  #sb nav button{justify-content:center;padding:9px 4px;}
+  .stats{grid-template-columns:1fr 1fr;}
+  .fr{grid-template-columns:1fr;}
+  .fr3{grid-template-columns:1fr;}
+  #ct{padding:14px 12px;}
+  #topbar{padding:10px 14px;}
+}
+
+/* PRINT */
+@media print{
+  body>*:not(#print-area){display:none!important;}
+  #print-area{display:block!important;font-family:'Noto Sans JP',sans-serif;}
+  .no-print{display:none!important;}
+}
+#print-area{display:none;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="ls">
+  <div class="lc">
+    <h1>📚 指導予約システム 📚</h1>
+    <p class="lc-sub">選択してログインしてください</p>
+    <div class="rtabs" id="rtabs">
+      <button class="on" onclick="setRole('student')">生徒</button>
+      <button onclick="setRole('tutor')">チューター</button>
+      <button onclick="setRole('admin')">管理者</button>
+    </div>
+    <div class="fg"><label>ユーザーID</label><input type="text" id="l-id" placeholder="ユーザーIDを入力" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <div class="fg" id="l-pw-g" style="display:none">
+      <label>パスワード</label>
+      <div class="pw-w"><input type="password" id="l-pw" placeholder="パスワードを入力" onkeydown="if(event.key==='Enter')doLogin()"/><button class="pw-eye" onclick="eyeToggle('l-pw',this)">👁</button></div>
+    </div>
+    <div class="err" id="l-err"></div>
+    <button class="btn btn-dk full" style="margin-top:6px" onclick="doLogin()">ログイン</button>
+    <p style="font-size:11px;color:var(--tx3);margin-top:10px;text-align:center">生徒はパスワード不要 ／ 指導者・管理者はパスワード必須</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <div id="sb">
+    <div class="logo"><h1>📚 SSC 予約システム 📚</h1><p>Tutoring Scheduler</p></div>
+    <nav id="snav"></nav>
+    <div class="su">
+      <p>ログイン中</p>
+      <span class="sn" id="s-un"></span>
+      <button class="sl" onclick="doLogout()">ログアウト</button>
+      <button id="btn-save-html" class="btn btn-gn" style="display:none;margin:6px 8px 0;width:calc(100% - 16px);font-size:12px" onclick="saveHtml()">💾 HTMLデータ保存</button>
+    </div>
+  </div>
+  <div id="main">
+    <div id="topbar"><h2 id="t-ttl">カレンダー</h2><div class="tm" id="t-meta"></div><span id="save-indicator" style="font-size:12px;font-weight:500;transition:color .3s"></span></div>
+    <div id="ct"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="ov" id="ov" style="display:none" onclick="ovClose(event)"><div class="modal" id="modal"></div></div>
+
+<!-- PRINT AREA -->
+<div id="print-area"></div>
+
+<script>
+// ═══════════════════════════ HELPERS (先に定義) ═══════════════════════════
+const WD=['日','月','火','水','木','金','土'];
+const ALL_SJ=['数学','英語','国語','現代文','古文','漢文','物理','化学','生物','地学','日本史','世界史','地理','政治経済','情報','小論文','その他'];
+const TUTOR_GRADES=['大学1年','大学2年','大学3年','大学4年','大学院1年','大学院2年','その他'];
+
+function ldate(d){return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;}
+function dstr(n){const d=new Date();d.setDate(d.getDate()+n);return ldate(d);}
+function pd(s){return new Date(s+'T00:00:00');}
+function fd(s){const d=pd(s);return `${d.getMonth()+1}/${d.getDate()}`;}
+function fdt(iso){const d=new Date(iso);return `${d.getFullYear()}/${z(d.getMonth()+1)}/${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`;}
+function z(n){return String(n).padStart(2,'0');}
+function today(){return ldate(new Date());}
+function wkd(off){
+  const t=new Date();t.setHours(0,0,0,0);
+  const m=new Date(t);m.setDate(t.getDate()-(t.getDay()+6)%7+off*7); // correct Mon-start (works for Sunday too)
+  return Array.from({length:6},(_,i)=>{const d=new Date(m);d.setDate(m.getDate()+i);return d;}); // Mon-Sat
+}
+function wkd7(off){
+  const t=new Date();t.setHours(0,0,0,0);
+  const m=new Date(t);m.setDate(t.getDate()-(t.getDay()+6)%7+off*7); // Mon start
+  return Array.from({length:7},(_,i)=>{const d=new Date(m);d.setDate(m.getDate()+i);return d;}); // Mon-Sun
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ═══════════════════════════ DATA ═══════════════════════════
+/* __DATA_BEGIN__ */
+const ADMIN={id:'admin',name:'管理者',pw:'admin',role:'admin'};
+
+// Students: { gradeKey: { className: [ {id,name} ] } }
+let studentDB = {
+  '1年': {
+    'Aクラス':[{id:'s001',name:'山田 花子'},{id:'s002',name:'鈴木 太郎'}],
+    'Bクラス':[{id:'s003',name:'田中 赤'},{id:'s004',name:'佐藤 青'}],
+  },
+  '2年': {
+    'Aクラス':[{id:'s011',name:'磯野 カツオ'},{id:'s012',name:'山田 黄'}],
+    'Bクラス':[{id:'s013',name:'進学 太郎'}],
+  },
+  '3年': {
+    'Aクラス':[{id:'s021',name:'フグ田 タラオ'},{id:'s022',name:'磯野 ワカメ'}],
+  },
+};
+
+let tutors = {
+  t001:{id:'t001',name:'佐藤 先生',pw:'tutor123',subjects:['数学','物理','化学'],bio:'理系全般が得意です。',grade:'大学2年'},
+  t002:{id:'t002',name:'伊藤 先生',pw:'tutor456',subjects:['英語','国語','現代文','古文'],bio:'語学・文系専門です。',grade:'大学3年'},
+};
+
+// Schedule: { tutorId: { weeklyTemplate: { 0:[], 1:[{start,end,label}], ... }, overrides: { dateStr: [{start,end,label}] | 'off' } } }
+// weeklyTemplate key = day of week (0=Sun,6=Sat)
+function defaultSchedule(tid){
+  const wt={};
+  // Weekday default slots
+  [1,2,3,4,5].forEach(d=>wt[d]=[
+    {start:'15:30',end:'16:20',label:'コマ①'},
+    {start:'16:20',end:'17:10',label:'コマ②'},
+    {start:'17:10',end:'18:00',label:'コマ③'},
+    {start:'18:00',end:'18:50',label:'コマ④'},
+  ]);
+  // Saturday
+  wt[6]=[
+    {start:'13:00',end:'13:50',label:'コマ①'},
+    {start:'13:50',end:'14:40',label:'コマ②'},
+    {start:'14:40',end:'15:30',label:'コマ③'},
+    {start:'15:30',end:'16:20',label:'コマ④'},
+  ];
+  wt[0]=null; // Sunday off
+  return {weeklyTemplate:wt, overrides:{}};
+}
+
+let schedules = {
+  t001: defaultSchedule('t001'),
+  t002: defaultSchedule('t002'),
+};
+
+// ─── スケジュールテンプレート ───
+// { id, name, slots:[{start,end,label}] }
+let scheduleTemplates = [
+  {id:'tpl-001',name:'平日（標準）',slots:[
+    {start:'15:30',end:'16:20',label:'コマ①'},{start:'16:20',end:'17:10',label:'コマ②'},
+    {start:'17:10',end:'18:00',label:'コマ③'},{start:'18:00',end:'18:50',label:'コマ④'}]},
+  {id:'tpl-002',name:'土曜（標準）',slots:[
+    {start:'13:00',end:'13:50',label:'コマ①'},{start:'13:50',end:'14:40',label:'コマ②'},
+    {start:'14:40',end:'15:30',label:'コマ③'},{start:'15:30',end:'16:20',label:'コマ④'}]},
+  {id:'tpl-003',name:'長期休暇',slots:[
+    {start:'10:00',end:'10:50',label:'コマ①'},{start:'10:50',end:'11:40',label:'コマ②'},
+    {start:'13:00',end:'13:50',label:'コマ③'},{start:'13:50',end:'14:40',label:'コマ④'}]},
+];
+let tplIdSeq=10;
+
+// ─── 管理者予約（面談・業務・会議等） ───
+// { id, date, slotIdx, tutorId, adminType, memo, isAdmin:true, createdAt }
+let adminReservations=[];
+let adminResId=1000;
+
+let reservations=[
+  {id:1,date:dstr(1),slotIdx:0,studentId:'s002',tutorId:'t001',subject:'数学',range:'二次方程式',purpose:'定期テスト対策',concurrent:'なし'},
+  {id:2,date:dstr(2),slotIdx:1,studentId:'s001',tutorId:'t002',subject:'英語',range:'仮定法過去',purpose:'受験準備',concurrent:'なし'},
+];
+let cancelled=[];
+let loginLogs=[];
+let nid=30;
+let CU=null,WO=0,calTid=null;
+let _tCalView='week'; // 'day','week','month'
+let _tCalDayOff=0;   // day offset from today for day view
+let _tCalMonthOff=0; // month offset for month view
+
+// ─── QUOTA: 28コマ持ち分 ───
+// 消費済みコマ = 未来日の予約数のみ（過去日は自動回収）
+const QUOTA_MAX=28;
+function studentUsedSlots(sid){
+  const ts=today();
+  return reservations.filter(r=>r.studentId===sid && r.date>=ts).length;
+}
+function studentQuotaLeft(sid){ return QUOTA_MAX - studentUsedSlots(sid); }
+
+// ─── キャンセル回数カウント ───
+function studentCancelCount(sid){ return cancelled.filter(r=>r.studentId===sid).length; }
+function tutorAbsenceCount(tid){ return tutorAbsences.filter(a=>a.tutorId===tid).length; }
+
+// ─── 指導者欠勤記録 ───
+// { tutorId, date, reason, notifiedAt }
+let tutorAbsences=[];
+
+// ─── 指導者欠勤通知メッセージ ───
+// { studentId, message, readAt:null, createdAt }
+let notifications=[];
+
+// ─── 変更ログ ───
+// { actor, role, action, details, at }
+let changeLogs=[];
+/* __DATA_END__ */
+
+// Flat lookup
+function flatStudents(){
+  const m={};
+  Object.values(studentDB).forEach(cls=>Object.values(cls).forEach(arr=>arr.forEach(s=>m[s.id]=s)));
+  return m;
+}
+
+// ─── 重複チェック: 同日同コマ時間帯に別の指導者を既に予約していないか ───
+function hasTimeConflict(sid, date, tutorId, slotIdx){
+  // Get time range of the slot being booked
+  const newSlots=getTutorSlots(tutorId,date);
+  const newSlot=newSlots[slotIdx];
+  if(!newSlot)return false;
+  // Check all other reservations for same student on same date with different tutors
+  const sameDay=reservations.filter(r=>r.studentId===sid && r.date===date && r.tutorId!==tutorId);
+  for(const r of sameDay){
+    const rSlots=getTutorSlots(r.tutorId,date);
+    const rSlot=rSlots[r.slotIdx];
+    if(!rSlot)continue;
+    // overlap check
+    if(newSlot.start < rSlot.end && newSlot.end > rSlot.start) return true;
+  }
+  return false;
+}
+
+// ─── 同一指導者同日2コマ上限チェック ───
+function sameTutorDayCount(sid, date, tutorId){
+  return reservations.filter(r=>r.studentId===sid && r.date===date && r.tutorId===tutorId).length;
+}
+
+// ─── 予約バリデーション ─── returns null if OK, string if error
+function validateBooking(sid, date, slotIdx, tutorId){
+  // 0) 欠勤チェック
+  if(isTutorAbsent(tutorId,date)){
+    const t=tutors[tutorId];const d=pd(date);
+    return `${t?t.name:'この指導者'}は${d.getMonth()+1}/${d.getDate()}は欠勤のため予約できません。`;
+  }
+  // 0b) 管理者予約チェック
+  if(adminReservations.find(r=>r.date===date&&r.slotIdx===slotIdx&&r.tutorId===tutorId)){
+    return 'このコマは管理者によって予約済みです（面談・業務等）。';
+  }
+  // 1) quota
+  if(studentQuotaLeft(sid)<=0) return `予約可能なコマ数（${QUOTA_MAX}コマ）の上限に達しています。過去のコマが終了すると自動的に回復します。`;
+  // 2) 同日同時間帯重複
+  if(hasTimeConflict(sid,date,tutorId,slotIdx)){
+    const slots=getTutorSlots(tutorId,date);const sl=slots[slotIdx];
+    return `この時間帯（${sl?sl.start+'〜'+sl.end:''}）はすでに別の指導者を予約しています。`;
+  }
+  // 3) 同一指導者 1日2コマ上限
+  if(sameTutorDayCount(sid,date,tutorId)>=2){
+    const t=tutors[tutorId];
+    return `${t?t.name:'この指導者'}への${date.slice(5).replace('-','/')}の予約は上限（2コマ）に達しています。`;
+  }
+  return null;
+}
+
+// ─── 欠勤処理：その日の予約生徒に通知 + overrideに'absence'をセット ───
+function processTutorAbsence(tid, date, reason){
+  const t=tutors[tid];if(!t)return;
+  tutorAbsences.push({tutorId:tid,date,reason,createdAt:new Date().toISOString()});
+  if(schedules[tid])schedules[tid].overrides[date]='absence';
+  const affected=reservations.filter(r=>r.tutorId===tid&&r.date===date);
+  const d=pd(date);
+  const dateStr=`${d.getMonth()+1}月${d.getDate()}日`;
+  affected.forEach(r=>{
+    notifications.push({
+      studentId:r.studentId,
+      message:`${t.name}は${reason}のため${dateStr}の出勤がなくなりました。他の指導者を予約するか、管理教員に問い合わせてください。`,
+      readAt:null,
+      createdAt:new Date().toISOString(),
+    });
+  });
+}
+
+// Get slots for tutor on a date ('absence' and 'off' both return [])
+function getTutorSlots(tid,dateS){
+  const sc=schedules[tid];if(!sc)return[];
+  const d=pd(dateS);const dow=d.getDay();
+  if(sc.overrides&&sc.overrides[dateS]!==undefined){
+    const ov=sc.overrides[dateS];
+    return(ov==='off'||ov==='absence')?[]:ov;
+  }
+  const wt=sc.weeklyTemplate[dow];
+  return wt||[];
+}
+
+function isTutorAbsent(tid,dateS){return schedules[tid]?.overrides[dateS]==='absence';}
+
+// getRes checks both student reservations and admin reservations
+function getRes(date,slotIdx,tid){
+  return reservations.find(r=>r.date===date&&r.slotIdx===slotIdx&&r.tutorId===tid)
+    ||adminReservations.find(r=>r.date===date&&r.slotIdx===slotIdx&&r.tutorId===tid)
+    ||null;
+}
+
+// ═══════════════════════════ CHANGE LOG & SAVE ═══════════════════════════
+function logChange(action,details){
+  changeLogs.unshift({actor:CU?CU.name:'システム',role:CU?CU.role:'',action,details,at:new Date().toISOString()});
+}
+function saveHtml(){
+  const html=document.documentElement.outerHTML;
+  const m1='/* __DATA_BEGIN__ */';const m2='/* __DATA_END__ */';
+  const s=html.indexOf(m1);const e=html.indexOf(m2);
+  if(s<0||e<0){alert('データマーカーが見つかりません');return;}
+  const scData=`/* __DATA_BEGIN__ */
+const ADMIN={id:'${ADMIN.id}',name:'${ADMIN.name}',pw:'${ADMIN.pw}',role:'admin'};
+let studentDB=${JSON.stringify(studentDB,null,2)};
+let tutors=${JSON.stringify(tutors,null,2)};
+let schedules={};
+let scheduleTemplates=${JSON.stringify(scheduleTemplates,null,2)};
+let tplIdSeq=${tplIdSeq};
+let adminReservations=${JSON.stringify(adminReservations,null,2)};
+let adminResId=${adminResId};
+let reservations=${JSON.stringify(reservations,null,2)};
+let cancelled=${JSON.stringify(cancelled,null,2)};
+let loginLogs=${JSON.stringify(loginLogs,null,2)};
+let changeLogs=${JSON.stringify(changeLogs,null,2)};
+let tutorAbsences=${JSON.stringify(tutorAbsences,null,2)};
+let notifications=${JSON.stringify(notifications,null,2)};
+let nid=${nid};`;
+  // Rebuild schedules inline
+  const schedInit=Object.entries(schedules).map(([tid,sc])=>
+    `schedules['${tid}']=${JSON.stringify(sc)};`
+  ).join('\n');
+  const newData=scData+'\n'+schedInit+'\n';
+  const newHtml=html.slice(0,s)+newData+'\n'+html.slice(e+m2.length);
+  const blob=new Blob([newHtml],{type:'text/html;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`reservation_system_v5_2_${today()}.html`;a.click();
+  logChange('データ保存','HTMLとして保存');
+}
+function pgChangeLog(C){
+  C.innerHTML=`<div class="card">
+    <div class="ch"><h3>📝 変更ログ（${changeLogs.length}件）</h3>
+      <button class="btn btn-gh btn-sm" onclick="exportChangeLog()">📥 CSVエクスポート</button>
+    </div>
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>日時</th><th>操作者</th><th>ロール</th><th>操作</th><th>詳細</th></tr></thead>
+    <tbody>${changeLogs.length===0?'<tr><td colspan="5" style="text-align:center;color:var(--tx2);padding:20px">記録なし</td></tr>':
+    changeLogs.map(l=>`<tr>
+      <td style="font-family:var(--mn);font-size:12px;white-space:nowrap">${fdt(l.at)}</td>
+      <td>${esc(l.actor)}</td>
+      <td><span class="bx ${l.role==='admin'?'bx-rd':l.role==='tutor'?'bx-gn':'bx-gy'}">${l.role==='admin'?'管理者':l.role==='tutor'?'指導者':'生徒'}</span></td>
+      <td>${esc(l.action)}</td>
+      <td style="color:var(--tx2);font-size:12px">${esc(l.details)}</td>
+    </tr>`).join('')}
+    </tbody></table></div>
+  </div>`;
+}
+function exportChangeLog(){
+  const rows=[['日時','操作者','ロール','操作','詳細']];
+  changeLogs.forEach(l=>rows.push([fdt(l.at),l.actor,l.role,l.action,l.details]));
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`change_log_${today()}.csv`;a.click();
+}
+
+// ═══════════════════════════ LOCAL STORAGE PERSISTENCE ═══════════════════════════
+function saveToStorage(){
+  try{
+    localStorage.setItem('rsv_tutors',JSON.stringify(tutors));
+    localStorage.setItem('rsv_studentDB',JSON.stringify(studentDB));
+    const scOut={};Object.entries(schedules).forEach(([k,v])=>{scOut[k]=v;});
+    localStorage.setItem('rsv_schedules',JSON.stringify(scOut));
+    localStorage.setItem('rsv_scheduleTemplates',JSON.stringify(scheduleTemplates));
+    localStorage.setItem('rsv_reservations',JSON.stringify(reservations));
+    localStorage.setItem('rsv_cancelled',JSON.stringify(cancelled));
+    localStorage.setItem('rsv_adminReservations',JSON.stringify(adminReservations));
+    localStorage.setItem('rsv_tutorAbsences',JSON.stringify(tutorAbsences));
+    localStorage.setItem('rsv_notifications',JSON.stringify(notifications));
+    localStorage.setItem('rsv_loginLogs',JSON.stringify(loginLogs));
+    localStorage.setItem('rsv_changeLogs',JSON.stringify(changeLogs));
+    localStorage.setItem('rsv_tplIdSeq',String(tplIdSeq));
+    localStorage.setItem('rsv_adminResId',String(adminResId));
+    localStorage.setItem('rsv_nid',String(nid));
+    // Flash save indicator
+    const el=document.getElementById('save-indicator');
+    if(el){el.textContent='💾 保存済';el.style.color='var(--gr)';setTimeout(()=>{el.textContent='';},2000);}
+  }catch(e){console.error('saveToStorage failed:',e);}
+}
+function loadFromStorage(){
+  try{
+    const t=localStorage.getItem('rsv_tutors');if(t)tutors=JSON.parse(t);
+    const s=localStorage.getItem('rsv_studentDB');if(s)studentDB=JSON.parse(s);
+    const sc=localStorage.getItem('rsv_schedules');if(sc){const p=JSON.parse(sc);Object.keys(p).forEach(k=>{schedules[k]=p[k];});}
+    const st=localStorage.getItem('rsv_scheduleTemplates');if(st)scheduleTemplates=JSON.parse(st);
+    const r=localStorage.getItem('rsv_reservations');if(r)reservations=JSON.parse(r);
+    const c=localStorage.getItem('rsv_cancelled');if(c)cancelled=JSON.parse(c);
+    const ar=localStorage.getItem('rsv_adminReservations');if(ar)adminReservations=JSON.parse(ar);
+    const ta=localStorage.getItem('rsv_tutorAbsences');if(ta)tutorAbsences=JSON.parse(ta);
+    const n=localStorage.getItem('rsv_notifications');if(n)notifications=JSON.parse(n);
+    const ll=localStorage.getItem('rsv_loginLogs');if(ll)loginLogs=JSON.parse(ll);
+    const cl=localStorage.getItem('rsv_changeLogs');if(cl)changeLogs=JSON.parse(cl);
+    const tis=localStorage.getItem('rsv_tplIdSeq');if(tis)tplIdSeq=parseInt(tis);
+    const aid=localStorage.getItem('rsv_adminResId');if(aid)adminResId=parseInt(aid);
+    const ni=localStorage.getItem('rsv_nid');if(ni)nid=parseInt(ni);
+  }catch(e){console.error('loadFromStorage failed:',e);}
+}
+
+// ═══════════════════════════ PASSWORD EYE ═══════════════════════════
+function eyeToggle(id,btn){
+  const inp=document.getElementById(id);if(!inp)return;
+  inp.type=inp.type==='password'?'text':'password';
+  btn.textContent=inp.type==='password'?'👁':'🔒';
+}
+function pwField(id,ph){
+  return `<div class="pw-w"><input type="password" id="${id}" placeholder="${ph}"/><button class="pw-eye" type="button" onclick="eyeToggle('${id}',this)">👁</button></div>`;
+}
+
+// ═══════════════════════════ LOGIN ═══════════════════════════
+let LR='student';
+function setRole(r){
+  LR=r;
+  document.querySelectorAll('#rtabs button').forEach((b,i)=>b.classList.toggle('on',['student','tutor','admin'][i]===r));
+  document.getElementById('l-pw-g').style.display=r!=='student'?'block':'none';
+  document.getElementById('l-err').textContent='';
+}
+function doLogin(){
+  const id=document.getElementById('l-id').value.trim();
+  const pw=document.getElementById('l-pw').value;
+  let user=null;
+  if(LR==='admin'){
+    if(id===ADMIN.id&&pw===ADMIN.pw)user={...ADMIN};
+    else{document.getElementById('l-err').textContent='IDまたはパスワードが違います';return;}
+  }else if(LR==='tutor'){
+    const t=tutors[id];
+    if(!t){document.getElementById('l-err').textContent='指導者IDが見つかりません';return;}
+    if(t.pw!==pw){document.getElementById('l-err').textContent='パスワードが違います';return;}
+    user={...t,role:'tutor'};
+  }else{
+    const fs=flatStudents();
+    if(!fs[id]){document.getElementById('l-err').textContent='生徒IDが見つかりません';return;}
+    user={...fs[id],role:'student'};
+  }
+  CU=user;
+  // Build log entry with grade/klass for filtering
+  let _logGrade='',_logKlass='';
+  if(user.role==='student'){
+    Object.entries(studentDB).forEach(([g,classes])=>{
+      Object.entries(classes).forEach(([kl,arr])=>{
+        if(arr.some(s=>s.id===id)){_logGrade=g;_logKlass=kl;}
+      });
+    });
+  } else if(user.role==='tutor'){
+    _logGrade=user.grade||'';
+  }
+  loginLogs.unshift({userId:id,name:user.name,role:{student:'生徒',tutor:'指導者',admin:'管理者'}[user.role],grade:_logGrade,klass:_logKlass,loginAt:new Date().toISOString()});
+  saveToStorage();
+  document.getElementById('ls').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('s-un').textContent=user.name;
+  buildSB();
+  calTid=user.role==='tutor'?user.id:(Object.keys(tutors)[0]||null);
+  showPg(user.role==='admin'?'all-res':user.role==='tutor'?'t-cal':'cal');
+  startAutoLogout();
+  document.getElementById('btn-save-html').style.display=user.role==='admin'?'block':'none';
+}
+function doLogout(){
+  stopAutoLogout();
+  CU=null;WO=0;
+  document.getElementById('app').style.display='none';
+  document.getElementById('ls').style.display='flex';
+  document.getElementById('l-id').value='';
+  document.getElementById('l-pw').value='';
+  document.getElementById('l-err').textContent='';
+  document.getElementById('btn-save-html').style.display='none';
+  setRole('student');
+}
+
+// ═══════════════════════════ SIDEBAR / ROUTER ═══════════════════════════
+const NAV={
+  student:[{id:'cal',ic:'📅',lb:'予約カレンダー'},{id:'find',ic:'🔍',lb:'指導者を探す'},{id:'my-res',ic:'📋',lb:'自分の予約'}],
+  tutor:[{id:'t-cal',ic:'📅',lb:'勤務カレンダー'},{id:'t-res',ic:'📋',lb:'予約一覧'}],
+  admin:[{id:'all-res',ic:'📋',lb:'全予約管理'},{id:'mgr-t',ic:'👩‍🏫',lb:'指導者管理'},{id:'mgr-sh',ic:'📆',lb:'シフト管理'},{id:'mgr-stu',ic:'👥',lb:'生徒情報'},{id:'ll',ic:'🔐',lb:'ログイン履歴'},{id:'chg-log',ic:'📝',lb:'変更ログ'}],
+};
+const PTIT={cal:'予約カレンダー',find:'指導者を探す','my-res':'自分の予約','t-cal':'勤務カレンダー','t-res':'予約一覧','all-res':'全予約管理','mgr-t':'指導者管理','mgr-sh':'シフト管理','mgr-stu':'生徒情報',ll:'ログイン履歴','chg-log':'変更ログ'};
+function buildSB(){
+  document.getElementById('snav').innerHTML=NAV[CU.role].map(p=>`<button onclick="showPg('${p.id}')" id="nav-${p.id}"><span style="font-size:15px;flex-shrink:0">${p.ic}</span><span>${p.lb}</span></button>`).join('');
+}
+function setNav(id){
+  document.querySelectorAll('#snav button').forEach(b=>b.classList.remove('active'));
+  const e=document.getElementById('nav-'+id);if(e)e.classList.add('active');
+}
+function showPg(pg){
+  setNav(pg);
+  document.getElementById('t-ttl').textContent=PTIT[pg]||pg;
+  document.getElementById('t-meta').textContent=CU.name+'（'+{student:'生徒',tutor:'指導者',admin:'管理者'}[CU.role]+'）';
+  const c=document.getElementById('ct');
+  ({
+    cal:()=>pgCal(c),find:()=>pgFind(c),'my-res':()=>pgMyRes(c),
+    't-cal':()=>pgTCal(c),'t-res':()=>pgTRes(c),
+    'all-res':()=>pgAllRes(c),'mgr-t':()=>pgMgrT(c),'mgr-sh':()=>pgMgrSh(c),
+    'mgr-stu':()=>pgMgrStu(c),'ll':()=>pgLL(c),'chg-log':()=>pgChangeLog(c),
+  }[pg]||(() => c.innerHTML=''))();
+}
+
+// ═══════════════════════════ STUDENT CALENDAR ═══════════════════════════
+function pgCal(C){
+  const dates=wkd(WO);const ts=today();
+  const tList=Object.values(tutors);
+  if(!tList.length){C.innerHTML='<p style="color:var(--tx2);padding:20px">指導者が登録されていません</p>';return;}
+  if(!calTid||!tutors[calTid])calTid=tList[0].id;
+  const wl=`${dates[0].getMonth()+1}/${dates[0].getDate()} 〜 ${dates[5].getMonth()+1}/${dates[5].getDate()}`;
+  const maxSlots=Math.max(...dates.map(d=>getTutorSlots(calTid,ldate(d)).length),1);
+
+  // Notifications for this student
+  const myNotifs=notifications.filter(n=>n.studentId===CU.id&&!n.readAt);
+  const notifHtml=myNotifs.length?`<div style="background:var(--am-l);border:1px solid var(--am-b);border-radius:var(--r);padding:12px 14px;margin-bottom:14px">
+    <div style="font-size:13px;font-weight:500;color:var(--am);margin-bottom:6px">📢 お知らせ（${myNotifs.length}件）</div>
+    ${myNotifs.map((n,i)=>`<div style="font-size:13px;color:var(--tx);padding:6px 0;border-bottom:1px solid var(--am-b);display:flex;justify-content:space-between;gap:10px">
+      <span>${esc(n.message)}</span>
+      <button class="btn btn-sm" style="background:transparent;border:1px solid var(--am-b);color:var(--am);white-space:nowrap" onclick="readNotif(${notifications.indexOf(n)})">既読</button>
+    </div>`).join('')}
+  </div>`:'';
+
+  const left=studentQuotaLeft(CU.id);
+  const usedPct=Math.round((QUOTA_MAX-left)/QUOTA_MAX*100);
+  const quotaBar=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r)">
+    <span style="font-size:12px;color:var(--tx2);white-space:nowrap">予約残コマ数</span>
+    <div style="flex:1;height:8px;background:var(--sf2);border-radius:4px;overflow:hidden">
+      <div style="height:100%;width:${usedPct}%;background:${left<=5?'var(--rd)':left<=14?'var(--am)':'var(--gr)'};border-radius:4px"></div>
+    </div>
+    <span style="font-size:13px;font-weight:700;color:${left<=5?'var(--rd)':left<=14?'var(--am)':'var(--gr)'};white-space:nowrap">${left} / ${QUOTA_MAX}</span>
+  </div>`;
+
+  // 予約の傾向
+  const myRes=reservations.filter(r=>r.studentId===CU.id);
+  let trendHtml='';
+  if(myRes.length>0){
+    const tutorCnt={};myRes.forEach(r=>{tutorCnt[r.tutorId]=(tutorCnt[r.tutorId]||0)+1;});
+    const tutorSorted=Object.entries(tutorCnt).sort((a,b)=>b[1]-a[1]);
+    const subCnt={};myRes.forEach(r=>{if(r.subject)subCnt[r.subject]=(subCnt[r.subject]||0)+1;});
+    const subSorted=Object.entries(subCnt).sort((a,b)=>b[1]-a[1]);
+    const total=myRes.length;
+    trendHtml=`<div style="background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px">📊 予約の傾向</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:8px;letter-spacing:.04em">よく利用する指導者</div>
+          ${tutorSorted.map(([tid,cnt])=>{const t2=tutors[tid];const pct=Math.round(cnt/total*100);return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:12px;min-width:70px;white-space:nowrap">${esc(t2?t2.name:tid)}</span>
+            <div style="flex:1;height:6px;background:var(--sf2);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--gr);border-radius:3px"></div></div>
+            <span style="font-size:11px;color:var(--tx2);font-family:var(--mn);min-width:30px;text-align:right">${cnt}回</span>
+          </div>`;}).join('')}
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:8px;letter-spacing:.04em">科目別指導回数</div>
+          ${subSorted.map(([sub,cnt])=>{const pct=Math.round(cnt/total*100);return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:12px;min-width:60px;white-space:nowrap">${esc(sub)}</span>
+            <div style="flex:1;height:6px;background:var(--sf2);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--bl);border-radius:3px"></div></div>
+            <span style="font-size:11px;color:var(--tx2);font-family:var(--mn);min-width:30px;text-align:right">${cnt}回</span>
+          </div>`;}).join('')}
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--tx3);margin-top:10px;text-align:right">累計 ${total} コマ（全期間）</div>
+    </div>`;
+  }
+
+  let h=`${notifHtml}${quotaBar}${trendHtml}
+  <div class="cal-hd">
+    <div class="cnav">
+      <button onclick="wkn(-1)">&#8249;</button><span>${wl}</span><button onclick="wkn(1)">&#8250;</button>
+    </div>
+    <button class="btn btn-gh btn-sm" onclick="wkn(0,1)">今週</button>
+  </div>
+  <div style="overflow-x:auto;margin-bottom:10px">
+    <div style="display:flex;flex-wrap:wrap;gap:6px;min-width:0;padding:2px">
+      ${tList.map(t=>`<button onclick="swTid('${t.id}')" style="display:flex;flex-direction:column;align-items:flex-start;padding:8px 12px;border:2px solid ${t.id===calTid?'var(--gr)':'var(--bd)'};border-radius:var(--r);background:${t.id===calTid?'var(--gr-l)':'var(--bg)'};cursor:pointer;min-width:110px;max-width:160px;transition:border-color .15s" onmouseenter="this.style.borderColor='var(--gr)'" onmouseleave="this.style.borderColor='${t.id===calTid?'var(--gr)':'var(--bd)'}'" >
+        <span style="font-size:13px;font-weight:${t.id===calTid?'700':'500'};color:${t.id===calTid?'var(--gr)':'var(--tx)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px">${esc(t.name)}</span>
+        <span style="font-size:10px;color:var(--tx2);margin-top:3px;white-space:normal;line-height:1.4">${t.subjects.slice(0,3).map(s=>esc(s)).join(' · ')}${t.subjects.length>3?' +'+( t.subjects.length-3):''}</span>
+      </button>`).join('')}
+    </div>
+  </div>
+  <div class="cgrid">
+    <div class="cgh">
+      <div>コマ</div>
+      ${dates.map(d=>{
+        const ds=ldate(d);const it=ds===ts;
+        const slots=getTutorSlots(calTid,ds);
+        const absent=isTutorAbsent(calTid,ds);
+        const wkInfo=slots.length?`<span style="font-size:9px;color:var(--gr)">${slots.length}コマ</span>`:
+          absent?`<span style="font-size:9px;color:var(--rd);font-weight:600">欠勤</span>`:
+          `<span style="font-size:9px;color:var(--tx3)">休み</span>`;
+        return `<div class="${it?'tod':''}"><div>${WD[d.getDay()]}</div><div style="font-size:16px;font-weight:700">${d.getDate()}</div>${wkInfo}</div>`;
+      }).join('')}
+    </div>
+    ${Array.from({length:maxSlots},(_,si)=>`
+    <div class="cgr">
+      <div class="cgt">コマ${si+1}</div>
+      ${dates.map(d=>{
+        const ds=ldate(d);
+        const absent=isTutorAbsent(calTid,ds);
+        if(absent)return`<div class="cgc"><div class="sb sb-f" style="background:var(--rd-l);color:var(--rd);border-color:var(--rd-b);font-size:9px">欠勤</div></div>`;
+        const slots=getTutorSlots(calTid,ds);
+        const slot=slots[si];
+        if(!slot)return`<div class="cgc"><div class="sb sb-o">—</div></div>`;
+        const past=d<new Date(new Date().setHours(0,0,0,0));
+        const res=getRes(ds,si,calTid);
+        let b='';
+        if(past){
+          b=res?`<div class="sb sb-p">済<br>${esc(res.isAdmin?'別業務':res.subject)}</div>`:`<div class="sb sb-p">終了</div>`;
+        }else if(!res){
+          b=`<div class="sb sb-e" onclick="modalBook('${ds}',${si},'${calTid}')">空<br><span style="font-size:9px">${slot.start}〜</span></div>`;
+        }else if(res.isAdmin){
+          b=`<div class="sb sb-f" style="background:var(--bl-l);color:var(--bl);border-color:var(--bl-b);font-size:11px;line-height:1.4">別業務<br><span style="font-size:9px">予約不可</span></div>`;
+        }else if(res.studentId===CU.id){
+          b=`<div class="sb sb-m" onclick="modalMySlot(${res.id})">予約済<br>${esc(res.subject)}</div>`;
+        }else{
+          b=`<div class="sb sb-f">満</div>`;
+        }
+        return `<div class="cgc">${b}</div>`;
+      }).join('')}
+    </div>`).join('')}
+  </div>
+  <div class="legend">
+    <span><span class="bx bx-gn">空</span> 予約可</span>
+    <span><span class="bx bx-rd">満</span> 予約済/欠勤</span>
+    <span><span class="bx bx-am">予約済</span> 自分</span>
+    <span><span class="bx bx-bl">別業務</span> 指導者別業務中</span>
+    <span><span class="bx bx-gy">終了</span> 過去</span>
+  </div>`;
+  C.innerHTML=h;
+}
+function wkn(d,r){if(r)WO=0;else WO+=d;showPg(CU.role==='student'?'cal':'t-cal');}
+function swTid(id){calTid=id;pgCal(document.getElementById('ct'));}
+function readNotif(idx){
+  if(notifications[idx])notifications[idx].readAt=new Date().toISOString();
+  pgCal(document.getElementById('ct'));
+}
+
+function tutorIM(tid){
+  const t=tutors[tid];if(!t)return;
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>${esc(t.name)}</h3><p class="ms">指導者プロフィール</p>
+    <div class="ir"><span class="ir-l">指導可能科目</span><span class="ir-v"><div class="stags">${t.subjects.map(s=>`<span class="stag">${esc(s)}</span>`).join('')}</div></span></div>
+    <div class="ir"><span class="ir-l">一言</span><span class="ir-v">${esc(t.bio||'—')}</span></div>
+    <div class="ma"><button class="btn btn-dk" onclick="CM()">閉じる</button></div>`);
+}
+
+// ═══════════════════════════ BOOKING ═══════════════════════════
+function modalBook(date,si,tid){
+  const t=tutors[tid];const d=pd(date);
+  const slots=getTutorSlots(tid,date);const slot=slots[si];
+  const lbl=`${d.getMonth()+1}/${d.getDate()}（${WD[d.getDay()]}） コマ${si+1} ${slot?slot.start+'〜'+slot.end:''}`;
+  // pre-validate
+  const vErr=validateBooking(CU.id,date,si,tid);
+  if(vErr){showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>予約できません</h3><p class="ms">${lbl}</p>
+    <div style="background:var(--rd-l);border:1px solid var(--rd-b);border-radius:var(--r);padding:12px;font-size:13px;color:var(--rd)">${esc(vErr)}</div>
+    <div class="ma"><button class="btn btn-dk" onclick="CM()">閉じる</button></div>`);return;}
+  // quota & cancel warnings
+  const left=studentQuotaLeft(CU.id);
+  const cancelCnt=studentCancelCount(CU.id);
+  const tutorAbsCnt=tutorAbsenceCount(tid);
+  const warns=[];
+  if(left<=5) warns.push(`⚠️ 残り予約可能コマ数：<strong>${left}コマ</strong>（上限28コマ）`);
+  if(cancelCnt>=3) warns.push(`⚠️ あなたのキャンセル回数は<strong>${cancelCnt}回</strong>です。キャンセルはなるべくお控えください。`);
+  if(tutorAbsCnt>=2) warns.push(`⚠️ ${esc(t?t.name:tid)}は過去<strong>${tutorAbsCnt}回</strong>の欠勤があります。`);
+  const warnHtml=warns.length?`<div style="background:var(--am-l);border:1px solid var(--am-b);border-radius:var(--r);padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--am);display:flex;flex-direction:column;gap:4px">${warns.map(w=>`<div>${w}</div>`).join('')}</div>`:'';
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>新規予約</h3><p class="ms">${lbl} ／ ${esc(t?t.name:'')}</p>
+    ${warnHtml}
+    <div style="font-size:12px;color:var(--tx2);margin-bottom:10px">残り予約可能コマ数：<strong style="color:var(--gr)">${left}</strong> / ${QUOTA_MAX}</div>
+    <div class="fg"><label>科目</label><select id="bk-s">${(t?t.subjects:ALL_SJ).map(s=>`<option>${esc(s)}</option>`).join('')}</select></div>
+    <div class="fg"><label>範囲・単元</label><input type="text" id="bk-r" placeholder="例：二次方程式、3章"/></div>
+    <div class="fg"><label>目的</label><select id="bk-p"><option>定期テスト対策</option><option>受験準備</option><option>授業補習</option><option>応用発展</option><option>その他</option></select></div>
+    <div class="fg"><label>同時受講者（いなければ「なし」）</label><input type="text" id="bk-c" value="なし"/></div>
+    <div class="err" id="bk-e"></div>
+    <div class="ma"><button class="btn btn-gh" onclick="CM()">戻る</button><button class="btn btn-dk" onclick="doBook('${date}',${si},'${tid}')">予約確定</button></div>`);
+}
+function doBook(date,si,tid){
+  const range=document.getElementById('bk-r').value.trim();
+  if(!range){document.getElementById('bk-e').textContent='範囲・単元を入力してください';return;}
+  if(getRes(date,si,tid)){document.getElementById('bk-e').textContent='このコマはすでに予約されています';return;}
+  const vErr=validateBooking(CU.id,date,si,tid);
+  if(vErr){document.getElementById('bk-e').textContent=vErr;return;}
+  reservations.push({id:nid++,date,slotIdx:si,studentId:CU.id,tutorId:tid,
+    subject:document.getElementById('bk-s').value,range,
+    purpose:document.getElementById('bk-p').value,
+    concurrent:document.getElementById('bk-c').value||'なし'});
+  saveToStorage();CM();pgCal(document.getElementById('ct'));
+}
+
+function modalMySlot(id){
+  const res=reservations.find(r=>r.id===id);if(!res)return;
+  const d=pd(res.date);
+  const slots=getTutorSlots(res.tutorId,res.date);const slot=slots[res.slotIdx];
+  const lbl=`${d.getMonth()+1}/${d.getDate()}（${WD[d.getDay()]}） コマ${res.slotIdx+1} ${slot?slot.start+'〜'+slot.end:''}`;
+  const t=tutors[res.tutorId];
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>予約詳細・修正</h3><p class="ms">${lbl}</p>
+    <div class="ir"><span class="ir-l">指導者</span><span class="ir-v">${esc(t?t.name:res.tutorId)}</span></div>
+    <hr class="div">
+    <div class="fr">
+      <div class="fg"><label>科目</label><select id="ed-s">${(t?t.subjects:ALL_SJ).map(s=>`<option ${s===res.subject?'selected':''}>${esc(s)}</option>`).join('')}</select></div>
+      <div class="fg"><label>目的</label><select id="ed-p">${['定期テスト対策','受験準備','授業補習','応用発展','その他'].map(p=>`<option ${p===res.purpose?'selected':''}>${p}</option>`).join('')}</select></div>
+    </div>
+    <div class="fg"><label>範囲・単元</label><input type="text" id="ed-r" value="${esc(res.range)}"/></div>
+    <div class="fg"><label>同時受講者</label><input type="text" id="ed-c" value="${esc(res.concurrent)}"/></div>
+    <hr class="div">
+    <p style="font-size:13px;font-weight:500;color:var(--rd);margin-bottom:7px">キャンセルする場合（理由必須）</p>
+    <div class="fg"><textarea id="ed-cr" placeholder="キャンセルの理由を記載してください" rows="2"></textarea></div>
+    <div class="err" id="ed-e"></div>
+    <div class="ma">
+      <button class="btn btn-gh" onclick="CM()">閉じる</button>
+      <button class="btn btn-rd" onclick="doCancel(${id})">キャンセル</button>
+      <button class="btn btn-dk" onclick="doEdit(${id})">修正保存</button>
+    </div>`);
+}
+function doEdit(id){
+  const res=reservations.find(r=>r.id===id);if(!res)return;
+  const range=document.getElementById('ed-r').value.trim();
+  if(!range){document.getElementById('ed-e').textContent='範囲を入力してください';return;}
+  res.subject=document.getElementById('ed-s').value;
+  res.purpose=document.getElementById('ed-p').value;
+  res.range=range;
+  res.concurrent=document.getElementById('ed-c').value||'なし';
+  saveToStorage();CM();showPg('my-res');
+}
+function doCancel(id){
+  const reason=document.getElementById('ed-cr').value.trim();
+  if(!reason){document.getElementById('ed-e').textContent='キャンセル理由を入力してください';return;}
+  const i=reservations.findIndex(r=>r.id===id);
+  if(i!==-1){const res=reservations.splice(i,1)[0];cancelled.push({...res,cancelReason:reason,cancelledAt:new Date().toISOString()});}
+  saveToStorage();CM();pgCal(document.getElementById('ct'));
+}
+
+// ═══════════════════════════ MY RESERVATIONS ═══════════════════════════
+function pgMyRes(C){
+  const mine=reservations.filter(r=>r.studentId===CU.id).sort((a,b)=>a.date.localeCompare(b.date)||a.slotIdx-b.slotIdx);
+  const myc=cancelled.filter(r=>r.studentId===CU.id);
+  C.innerHTML=`
+  <div class="card"><div class="ch"><h3>予約中（${mine.length}件）</h3></div>
+    ${mine.length===0?'<div class="cb" style="color:var(--tx2)">予約中のコマはありません</div>':`
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>日付</th><th>コマ</th><th>指導者</th><th>科目</th><th>範囲</th><th>目的</th><th>操作</th></tr></thead>
+    <tbody>${mine.map(r=>{const d=pd(r.date);const t=tutors[r.tutorId];const sl=getTutorSlots(r.tutorId,r.date)[r.slotIdx];return`<tr>
+      <td style="white-space:nowrap">${d.getMonth()+1}/${d.getDate()}（${WD[d.getDay()]}）</td>
+      <td style="white-space:nowrap"><span class="bx bx-am">コマ${r.slotIdx+1}</span>${sl?`<br><span style="font-size:10px;color:var(--tx3)">${sl.start}〜${sl.end}</span>`:''}</td>
+      <td>${esc(t?t.name:r.tutorId)}</td>
+      <td><span class="bx bx-gn">${esc(r.subject)}</span></td>
+      <td>${esc(r.range)}</td><td>${esc(r.purpose)}</td>
+      <td><button class="btn btn-gh btn-sm" onclick="modalMySlot(${r.id})">詳細/修正</button></td></tr>`;}).join('')}
+    </tbody></table></div>`}
+  </div>
+  <div class="card"><div class="ch"><h3>キャンセル済み（${myc.length}件）</h3></div>
+    ${myc.length===0?'<div class="cb" style="color:var(--tx2)">記録なし</div>':`
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>日付</th><th>コマ</th><th>指導者</th><th>科目</th><th>理由</th></tr></thead>
+    <tbody>${myc.map(r=>{const d=pd(r.date);const t=tutors[r.tutorId];return`<tr>
+      <td style="white-space:nowrap">${d.getMonth()+1}/${d.getDate()}（${WD[d.getDay()]}）</td>
+      <td>コマ${r.slotIdx+1}</td><td>${esc(t?t.name:r.tutorId)}</td>
+      <td>${esc(r.subject)}</td><td style="color:var(--tx2)">${esc(r.cancelReason)}</td></tr>`;}).join('')}
+    </tbody></table></div>`}
+  </div>`;
+}
+
+// ═══════════════════════════ FIND TUTOR ═══════════════════════════
+function pgFind(C){
+  C.innerHTML=`
+  <div class="sbar">
+    <div class="fg"><label>受講したい日</label><input type="date" id="fd-d" min="${today()}"/></div>
+    <div class="fg" style="flex:2;min-width:200px"><label>科目（複数可）</label>
+      <div class="chips" id="fd-chips">${ALL_SJ.map(s=>`<span class="chip" onclick="this.classList.toggle('on')">${esc(s)}</span>`).join('')}</div>
+    </div>
+    <button class="btn btn-gn" onclick="doFind()">絞り込み</button>
+  </div>
+  <div id="fd-r" class="tgrid">${renderTCards(Object.values(tutors),null,[])}</div>`;
+}
+function doFind(){
+  const date=document.getElementById('fd-d').value;
+  const subs=[...document.querySelectorAll('#fd-chips .chip.on')].map(c=>c.textContent);
+  let list=Object.values(tutors);
+  if(date)list=list.filter(t=>getTutorSlots(t.id,date).length>0);
+  if(subs.length)list=list.filter(t=>subs.some(s=>t.subjects.includes(s)));
+  document.getElementById('fd-r').innerHTML=renderTCards(list,date,subs);
+}
+function renderTCards(list,date,subs){
+  if(!list.length)return'<p style="color:var(--tx2);padding:20px">条件に合う指導者が見つかりませんでした</p>';
+  return list.map(t=>{
+    const slots=date?getTutorSlots(t.id,date):[];
+    const freeSlots=date?slots.filter((_,i)=>!getRes(date,i,t.id)):[];
+    const info=date?`<div style="margin-top:8px;font-size:12px;color:var(--tx2)">${fd(date)}：${slots.length?`${slots.length}コマ勤務`:'休み'}</div>
+    <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${freeSlots.map((sl,i)=>`<span class="bx bx-gn">コマ${slots.indexOf(sl)+1} ${sl.start}〜</span>`).join('')||'<span class="bx bx-gy">空きなし</span>'}</div>`:'';
+    return `<div class="tc"><h4>${esc(t.name)}</h4>
+      <div class="stags">${t.subjects.map(s=>`<span class="stag ${subs.includes(s)?'hl':''}">${esc(s)}</span>`).join('')}</div>
+      <p style="font-size:12px;color:var(--tx2)">${esc(t.bio||'')}</p>${info}
+      <div style="margin-top:10px"><button class="btn btn-gn btn-sm" onclick="swTid('${t.id}');showPg('cal')">カレンダーで予約 →</button></div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════ TUTOR CALENDAR ═══════════════════════════
+function pgTCal(C){
+  const ts=today();const tid=CU.id;
+  const absCnt=tutorAbsenceCount(tid);
+  const absWarn=absCnt>=2?'<div style="background:var(--am-l);border:1px solid var(--am-b);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--am)">⚠️ 欠勤回数：<strong>'+absCnt+'回</strong></div>':'';
+
+  // View selector header
+  const viewBar='<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">'
+    +'<div class="rtabs" style="margin-bottom:0">'
+    +'<button class="'+(_tCalView==='day'?'on':'')+'" onclick="_tCalView=\'day\';pgTCal(document.getElementById(\'ct\'))">日</button>'
+    +'<button class="'+(_tCalView==='week'?'on':'')+'" onclick="_tCalView=\'week\';pgTCal(document.getElementById(\'ct\'))">週</button>'
+    +'<button class="'+(_tCalView==='month'?'on':'')+'" onclick="_tCalView=\'month\';pgTCal(document.getElementById(\'ct\'))">月</button>'
+    +'</div>'
+    +'<button class="btn btn-gh btn-sm" onclick="_tCalView=\'week\';WO=0;_tCalDayOff=0;_tCalMonthOff=0;pgTCal(document.getElementById(\'ct\'))">今日</button>'
+    +'</div>';
+
+  let h=absWarn+viewBar;
+
+  if(_tCalView==='day'){
+    // ── Day View ──
+    const dayD=pd(dstr(_tCalDayOff));
+    const ds=ldate(dayD);
+    const dow=dayD.getDay();
+    const isSun=dow===0;
+    const dayLabel=dayD.getFullYear()+'年'+(dayD.getMonth()+1)+'月'+dayD.getDate()+'日（'+WD[dow]+'）';
+    h+='<div class="cal-hd"><div class="cnav">'
+      +'<button onclick="_tCalDayOff--;pgTCal(document.getElementById(\'ct\'))">&#8249;</button>'
+      +'<span>'+dayLabel+'</span>'
+      +'<button onclick="_tCalDayOff++;pgTCal(document.getElementById(\'ct\'))">&#8250;</button>'
+      +'</div></div>';
+    if(isSun){
+      h+='<div class="card"><div class="cb" style="text-align:center;padding:30px;color:var(--tx3)">'
+        +'<div style="font-size:32px;margin-bottom:8px">🔒</div>'
+        +'<div style="font-size:15px;font-weight:700">日曜日は定休日です</div>'
+        +'</div></div>';
+    } else {
+      const slots=getTutorSlots(tid,ds);
+      const isAbs=isTutorAbsent(tid,ds);
+      h+='<div class="card"><div class="ch"><h3>'+(isAbs?'⚠️ 欠勤日':slots.length+'コマ勤務')+'</h3></div><div class="cb">';
+      if(isAbs){
+        h+='<div style="color:var(--rd);font-weight:500">この日は欠勤登録されています。</div>';
+      } else if(!slots.length){
+        h+='<div style="color:var(--tx3)">この日はシフトがありません。</div>';
+      } else {
+        const pastDay=dayD<new Date(new Date().setHours(0,0,0,0));
+        h+='<div style="display:flex;flex-direction:column;gap:8px">';
+        slots.forEach(function(sl,i){
+          const res=getRes(ds,i,tid);
+          let status='';
+          if(res&&res.isAdmin) status='<span class="bx" style="background:var(--bl-l);color:var(--bl);border:1px solid var(--bl-b)">'+esc(res.adminType)+'</span>';
+          else if(res) status='<span class="bx bx-am">'+esc(res.subject)+' / 生徒:'+esc(res.studentId)+'</span>';
+          else if(pastDay) status='<span class="bx bx-gy">終了</span>';
+          else status='<span class="bx bx-gn">空き</span>';
+          h+='<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--sf);border-radius:var(--r)">'
+            +'<span style="font-size:13px;font-weight:600;min-width:110px">'+sl.start+'〜'+sl.end+'</span>'
+            +'<span style="font-size:12px;color:var(--tx2)">'+sl.label+'</span>'
+            +status
+            +'</div>';
+        });
+        h+='</div>';
+      }
+      h+='</div></div>';
+    }
+  } else if(_tCalView==='week'){
+    // ── Week View (Mon-Sun, 7 days) ──
+    const dates=wkd7(WO);
+    const wl=(dates[0].getMonth()+1)+'/'+dates[0].getDate()+' 〜 '+(dates[6].getMonth()+1)+'/'+dates[6].getDate();
+    const maxSlots=Math.max.apply(null,dates.map(function(d){return getTutorSlots(tid,ldate(d)).length;}).concat([1]));
+    h+='<div class="cal-hd"><div class="cnav">'
+      +'<button onclick="WO--;pgTCal(document.getElementById(\'ct\'))">&#8249;</button>'
+      +'<span>'+wl+'</span>'
+      +'<button onclick="WO++;pgTCal(document.getElementById(\'ct\'))">&#8250;</button>'
+      +'</div></div>';
+    h+='<div class="cgrid"><div class="cgh"><div>コマ</div>';
+    dates.forEach(function(d){
+      const ds=ldate(d);const it=ds===ts;const isSun=d.getDay()===0;
+      const slots=isSun?[]:getTutorSlots(tid,ds);
+      h+='<div class="'+(it?'tod':'')+(isSun?' sun-col':'')+'" style="'+(isSun?'background:var(--sf2);':'')+'" title="'+(isSun?'定休日':'')+'">'
+        +'<div style="'+(isSun?'color:var(--tx3);':'')+'">'+WD[d.getDay()]+'</div>'
+        +'<div style="font-size:16px;font-weight:700;color:'+(isSun?'var(--tx3)':'inherit')+'">'+d.getDate()+'</div>'
+        +'<div style="font-size:9px;color:'+(isSun?'var(--tx3)':slots.length?'var(--gr)':'var(--tx3)')+'">'+( isSun?'定休':slots.length?slots.length+'コマ':'休み')+'</div>'
+        +'</div>';
+    });
+    h+='</div>';
+    for(var si=0;si<maxSlots;si++){
+      h+='<div class="cgr"><div class="cgt">コマ'+(si+1)+'</div>';
+      (function(slotIdx){
+        dates.forEach(function(d){
+          const ds=ldate(d);const isSun=d.getDay()===0;
+          if(isSun){h+='<div class="cgc" style="background:var(--sf2)"><div class="sb sb-o" style="color:var(--tx3)">定休</div></div>';return;}
+          const slots=getTutorSlots(tid,ds);const slot=slots[slotIdx];
+          if(!slot){h+='<div class="cgc"><div class="sb sb-o">—</div></div>';return;}
+          const past=d<new Date(new Date().setHours(0,0,0,0));
+          const res=getRes(ds,slotIdx,tid);
+          let b='';
+          if(!res){
+            b='<div class="sb '+(past?'sb-p':'sb-e')+'" style="'+(past?'':'cursor:default')+'">'
+              +'<span style="font-weight:600">'+slot.start+'</span><br>'
+              +'<span style="font-size:9px">〜'+slot.end+'</span><br>空き</div>';
+          }else if(res.isAdmin){
+            b='<div class="sb" style="background:var(--bl-l);color:var(--bl);border:1px solid var(--bl-b);border-radius:var(--r);padding:6px;text-align:center;cursor:default;font-size:11px;line-height:1.4">'
+              +'<span style="font-weight:700">'+esc(res.adminType)+'</span><br>'
+              +'<span style="font-size:9px">別業務</span></div>';
+          }else{
+            b='<div class="sb sb-m" onclick="modalTSlot('+res.id+')" style="cursor:pointer">'
+              +'<span style="font-weight:600">'+esc(res.subject)+'</span><br>'
+              +'<span style="font-size:9px;font-family:var(--mn)">'+esc(res.studentId)+'</span></div>';
+          }
+          h+='<div class="cgc">'+b+'</div>';
+        });
+      })(si);
+      h+='</div>';
+    }
+    h+='</div>';
+  } else {
+    // ── Month View ──
+    const now=new Date();
+    const yr=now.getFullYear();const mo=now.getMonth()+_tCalMonthOff;
+    const baseDate=new Date(yr,mo,1);
+    const year=baseDate.getFullYear();const month=baseDate.getMonth();
+    const monthLabel=year+'年'+(month+1)+'月';
+    const firstDow=(new Date(year,month,1).getDay()+6)%7; // 0=Mon
+    const daysInMonth=new Date(year,month+1,0).getDate();
+    h+='<div class="cal-hd"><div class="cnav">'
+      +'<button onclick="_tCalMonthOff--;pgTCal(document.getElementById(\'ct\'))">&#8249;</button>'
+      +'<span>'+monthLabel+'</span>'
+      +'<button onclick="_tCalMonthOff++;pgTCal(document.getElementById(\'ct\'))">&#8250;</button>'
+      +'</div></div>';
+    h+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;margin-bottom:8px">';
+    ['月','火','水','木','金','土','日'].forEach(function(w,i){
+      h+='<div style="font-size:11px;font-weight:600;color:'+(i===6?'var(--tx3)':i===5?'var(--bl)':'var(--tx2)')+';padding:4px">'+w+'</div>';
+    });
+    h+='</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
+    for(var bi=0;bi<firstDow;bi++) h+='<div></div>';
+    for(var day=1;day<=daysInMonth;day++){
+      const d=new Date(year,month,day);
+      const ds=ldate(d);
+      const dow=d.getDay();const isSun=dow===0;
+      const it=ds===ts;
+      const slots=isSun?[]:getTutorSlots(tid,ds);
+      const isAbs=!isSun&&isTutorAbsent(tid,ds);
+      const rCount=slots.length?(reservations.filter(function(r){return r.tutorId===tid&&r.date===ds;}).length+adminReservations.filter(function(r){return r.tutorId===tid&&r.date===ds;}).length):0;
+      const bg=isAbs?'var(--rd-l)':isSun?'var(--sf2)':slots.length?'var(--gr-l)':'var(--sf)';
+      const tc=isAbs?'var(--rd)':isSun?'var(--tx3)':slots.length?'var(--gr)':'var(--tx3)';
+      const dOff=Math.round((d.getTime()-new Date(ts+'T00:00:00').getTime())/86400000);
+      h+='<div onclick="_tCalView=\'day\';_tCalDayOff='+dOff+';pgTCal(document.getElementById(\'ct\'))" style="padding:5px 3px;border:1px solid '+(it?'var(--gr)':'var(--bd)')+';border-radius:var(--r);background:'+bg+';cursor:pointer;min-height:48px;font-size:11px">'
+        +'<div style="font-weight:'+(it?700:400)+';color:'+(it?'var(--gr)':isSun?'var(--tx3)':'var(--tx)')+'">'+day+'</div>'
+        +'<div style="font-size:10px;color:'+tc+'">'+(isAbs?'欠勤':isSun?'定休':slots.length?slots.length+'コマ':'')+'</div>'
+        +(rCount?'<div style="font-size:10px;color:var(--bl)">'+rCount+'件</div>':'')
+        +'</div>';
+    }
+    h+='</div>';
+  }
+
+  C.innerHTML=h;
+}
+
+function modalTSlot(id){
+  const res=reservations.find(r=>r.id===id);if(!res)return;
+  const d=pd(res.date);
+  const slots=getTutorSlots(res.tutorId,res.date);const slot=slots[res.slotIdx];
+  const lbl=`${d.getMonth()+1}/${d.getDate()}（${WD[d.getDay()]}） コマ${res.slotIdx+1} ${slot?slot.start+'〜'+slot.end:''}`;
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>予約詳細</h3><p class="ms">${lbl}</p>
+    <div class="ir"><span class="ir-l">生徒番号</span><span class="ir-v" style="font-family:var(--mn)">${esc(res.studentId)}</span></div>
+    <div class="ir"><span class="ir-l">科目</span><span class="ir-v"><span class="bx bx-gn">${esc(res.subject)}</span></span></div>
+    <div class="ir"><span class="ir-l">範囲・内容</span><span class="ir-v">${esc(res.range)}</span></div>
+    <div class="ir"><span class="ir-l">目的</span><span class="ir-v">${esc(res.purpose)}</span></div>
+    <div class="ir"><span class="ir-l">同時受講者</span><span class="ir-v">${esc(res.concurrent)}</span></div>
+    <div class="ma"><button class="btn btn-dk" onclick="CM()">閉じる</button></div>`);
+}
+
+// ═══════════════════════════ TUTOR RESERVATIONS ═══════════════════════════
+function pgTRes(C){
+  const tid=CU.id;
+  const list=reservations.filter(r=>r.tutorId===tid).sort((a,b)=>a.date.localeCompare(b.date)||a.slotIdx-b.slotIdx);
+  const canc=cancelled.filter(r=>r.tutorId===tid);
+  const twk=wkd(0).map(d=>ldate(d));
+  C.innerHTML=`
+  <div class="stats" style="grid-template-columns:1fr 1fr">
+    <div class="st"><div class="lb">全予約数</div><div class="vl">${list.length}</div></div>
+    <div class="st"><div class="lb">今週</div><div class="vl">${list.filter(r=>twk.includes(r.date)).length}</div></div>
+  </div>
+  <div class="card"><div class="ch"><h3>予約一覧</h3></div>
+    ${list.length===0?'<div class="cb" style="color:var(--tx2)">予約なし</div>':`
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>日付</th><th>コマ</th><th>生徒番号</th><th>科目</th><th>範囲</th><th>目的</th><th>同時受講</th></tr></thead>
+    <tbody>${list.map(r=>{const d=pd(r.date);const sl=getTutorSlots(r.tutorId,r.date)[r.slotIdx];return`<tr>
+      <td style="white-space:nowrap">${d.getMonth()+1}/${d.getDate()}（${WD[d.getDay()]}）</td>
+      <td style="white-space:nowrap"><span class="bx bx-am">コマ${r.slotIdx+1}</span>${sl?`<br><span style="font-size:10px;color:var(--tx3)">${sl.start}〜${sl.end}</span>`:''}</td>
+      <td style="font-family:var(--mn)">${esc(r.studentId)}</td>
+      <td><span class="bx bx-gn">${esc(r.subject)}</span></td>
+      <td>${esc(r.range)}</td><td>${esc(r.purpose)}</td><td>${esc(r.concurrent)}</td></tr>`;}).join('')}
+    </tbody></table></div>`}
+  </div>
+  <div class="card"><div class="ch"><h3>キャンセル履歴（${canc.length}件）</h3></div>
+    ${canc.length===0?'<div class="cb" style="color:var(--tx2)">記録なし</div>':`
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>日付</th><th>コマ</th><th>生徒番号</th><th>科目</th><th>理由</th></tr></thead>
+    <tbody>${canc.map(r=>{const d=pd(r.date);return`<tr>
+      <td style="white-space:nowrap">${d.getMonth()+1}/${d.getDate()}（${WD[d.getDay()]}）</td>
+      <td>コマ${r.slotIdx+1}</td><td style="font-family:var(--mn)">${esc(r.studentId)}</td>
+      <td>${esc(r.subject)}</td><td style="color:var(--rd)">${esc(r.cancelReason)}</td></tr>`;}).join('')}
+    </tbody></table></div>`}
+  </div>`;
+}
+
+// ═══════════════════════════ TUTOR SCHEDULE EDITOR ═══════════════════════════
+function pgTSch(C){
+  const tid=CU.id;const sc=schedules[tid];
+  if(!sc){C.innerHTML='<p>スケジュールが見つかりません</p>';return;}
+  const wt=sc.weeklyTemplate;
+
+  let h=`
+  <div class="card"><div class="ch"><h3>曜日ごとの基本コマ設定</h3><span style="font-size:12px;color:var(--tx2)">毎週の標準スケジュール</span></div>
+  <div class="cb">
+  <div class="sch-week">
+    ${[0,1,2,3,4,5,6].map(dow=>{
+      const slots=wt[dow]||[];
+      const isWork=slots.length>0;
+      return`<div class="sch-day">
+        <div class="sch-day-head ${isWork?'work':'off'}" id="sdh-${dow}">${WD[dow]}曜日<br><span style="font-size:10px">${isWork?`${slots.length}コマ`:'休み'}</span></div>
+        <div class="sch-day-body" id="sdb-${dow}">
+          ${slots.map((sl,i)=>`<div class="sch-slot" id="ssl-${dow}-${i}">
+            <span>${sl.start}〜${sl.end}</span>
+            <button onclick="rmWeekSlot(${dow},${i})" title="削除">×</button>
+          </div>`).join('')}
+          <button class="add-slot-btn" onclick="addWeekSlot(${dow})">＋ コマを追加</button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+  </div></div>
+
+  <div class="card"><div class="ch"><h3>日付別の個別設定（上書き）</h3>
+    <button class="btn btn-bl btn-sm" onclick="addOverrideModal('${tid}')">＋ 日付を追加</button>
+  </div>
+  <div class="cb">
+    <p style="font-size:12px;color:var(--tx2);margin-bottom:12px">特定の日付（長期休み・祝日・特別対応など）の設定です。基本スケジュールより優先されます。</p>
+    <div class="override-list" id="ov-list">
+      ${renderOverrideList(tid)}
+    </div>
+  </div></div>`;
+  C.innerHTML=h;
+}
+
+function renderOverrideList(tid){
+  const ov=schedules[tid].overrides;
+  const entries=Object.entries(ov).sort((a,b)=>a[0].localeCompare(b[0]));
+  if(!entries.length)return'<p style="color:var(--tx2);font-size:13px">個別設定なし</p>';
+  return entries.map(([ds,slots])=>{
+    const d=pd(ds);
+    const slotsHtml=slots==='off'?'<span class="bx bx-gy">休み</span>':slots.map(sl=>`<span class="bx bx-am">${sl.start}〜${sl.end}</span>`).join('');
+    return`<div class="ov-item">
+      <span class="ov-date">${d.getMonth()+1}/${d.getDate()}（${WD[d.getDay()]}）</span>
+      <div class="ov-slots">${slotsHtml}</div>
+      <button onclick="rmOverride('${CU.id}','${ds}')" title="削除">×</button>
+    </div>`;
+  }).join('');
+}
+
+function addWeekSlot(dow){
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>${WD[dow]}曜日 コマを追加</h3><p class="ms">開始・終了時刻を入力してください</p>
+    <div class="fr">
+      <div class="fg"><label>開始時刻</label><input type="time" id="ws-s" value="15:30" step="600"/></div>
+      <div class="fg"><label>終了時刻</label><input type="time" id="ws-e" value="16:20" step="600"/></div>
+    </div>
+    <div class="fg"><label>コマ名（任意）</label><input type="text" id="ws-l" placeholder="コマ① など"/></div>
+    <div class="err" id="ws-err"></div>
+    <div class="ma">
+      <button class="btn btn-gh" onclick="CM()">キャンセル</button>
+      <button class="btn btn-dk" onclick="doAddWeekSlot(${dow})">追加</button>
+    </div>`);
+}
+function doAddWeekSlot(dow){
+  const s=document.getElementById('ws-s').value;
+  const e=document.getElementById('ws-e').value;
+  const l=document.getElementById('ws-l').value||`コマ${(schedules[CU.id].weeklyTemplate[dow]||[]).length+1}`;
+  if(!s||!e){document.getElementById('ws-err').textContent='時刻を入力してください';return;}
+  if(s>=e){document.getElementById('ws-err').textContent='終了時刻は開始より後にしてください';return;}
+  const wt=schedules[CU.id].weeklyTemplate;
+  if(!wt[dow])wt[dow]=[];
+  wt[dow].push({start:s,end:e,label:l});
+  wt[dow].sort((a,b)=>a.start.localeCompare(b.start));
+  CM();pgTSch(document.getElementById('ct'));
+}
+function rmWeekSlot(dow,i){
+  const wt=schedules[CU.id].weeklyTemplate;
+  if(wt[dow])wt[dow].splice(i,1);
+  if(wt[dow]&&wt[dow].length===0)wt[dow]=null;
+  pgTSch(document.getElementById('ct'));
+}
+
+function addOverrideModal(tid){
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>日付別スケジュール設定</h3><p class="ms">特定日のコマを個別設定します</p>
+    <div class="fg"><label>対象日</label><input type="date" id="ov-d" min="${today()}"/></div>
+    <div class="fg"><label>設定タイプ</label>
+      <select id="ov-type" onchange="ovTypeChange()">
+        <option value="custom">カスタム（コマを設定）</option>
+        <option value="off">休み（勤務なし）</option>
+      </select>
+    </div>
+    <div id="ov-slots-area">
+      <p style="font-size:12px;color:var(--tx2);margin-bottom:8px">コマを設定してください（＋ボタンで追加）</p>
+      <div id="ov-slot-list"></div>
+      <button class="btn btn-bl btn-sm" onclick="addOvSlotRow()" style="margin-top:6px">＋ コマを追加</button>
+    </div>
+    <div class="err" id="ov-err"></div>
+    <div class="ma">
+      <button class="btn btn-gh" onclick="CM()">キャンセル</button>
+      <button class="btn btn-dk" onclick="doAddOverride('${tid}')">設定を保存</button>
+    </div>`);
+  addOvSlotRow();
+}
+function ovTypeChange(){
+  const v=document.getElementById('ov-type').value;
+  document.getElementById('ov-slots-area').style.display=v==='off'?'none':'block';
+}
+let ovRowId=0;
+function addOvSlotRow(){
+  const rid=ovRowId++;
+  const row=document.createElement('div');
+  row.id='ovrow-'+rid;
+  row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:6px';
+  row.innerHTML=`<input type="time" value="15:30" step="600" style="flex:1;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--r);font-size:13px;background:var(--bg)"/>
+  <span style="font-size:12px;color:var(--tx2)">〜</span>
+  <input type="time" value="16:20" step="600" style="flex:1;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--r);font-size:13px;background:var(--bg)"/>
+  <button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--rd);font-size:16px">×</button>`;
+  document.getElementById('ov-slot-list').appendChild(row);
+}
+function doAddOverride(tid){
+  const date=document.getElementById('ov-d').value;
+  if(!date){document.getElementById('ov-err').textContent='日付を選んでください';return;}
+  const type=document.getElementById('ov-type').value;
+  if(type==='off'){
+    schedules[tid].overrides[date]='off';
+    CM();pgTSch(document.getElementById('ct'));return;
+  }
+  const rows=[...document.getElementById('ov-slot-list').children];
+  const slots=rows.map(row=>{
+    const inputs=row.querySelectorAll('input[type=time]');
+    return{start:inputs[0].value,end:inputs[1].value,label:'コマ'};
+  }).filter(sl=>sl.start&&sl.end&&sl.start<sl.end);
+  if(!slots.length){document.getElementById('ov-err').textContent='有効なコマを1つ以上追加してください';return;}
+  slots.sort((a,b)=>a.start.localeCompare(b.start));
+  schedules[tid].overrides[date]=slots;
+  CM();pgTSch(document.getElementById('ct'));
+}
+function rmOverride(tid,ds){
+  delete schedules[tid].overrides[ds];
+  pgTSch(document.getElementById('ct'));
+}
+
+// ═══════════════════════════ ADMIN: ALL RES ═══════════════════════════
+function pgAllRes(C){
+  const all=[...reservations].sort((a,b)=>a.date.localeCompare(b.date)||a.slotIdx-b.slotIdx);
+  const fs=flatStudents();
+  // Cancel count per student
+  const cancelMap={};
+  cancelled.forEach(r=>{cancelMap[r.studentId]=(cancelMap[r.studentId]||0)+1;});
+  // Absence count per tutor
+  const absMap={};
+  tutorAbsences.forEach(a=>{absMap[a.tutorId]=(absMap[a.tutorId]||0)+1;});
+
+  C.innerHTML=`
+  <div class="stats">
+    <div class="st"><div class="lb">全予約数</div><div class="vl">${all.length}</div></div>
+    <div class="st"><div class="lb">キャンセル数</div><div class="vl">${cancelled.length}</div></div>
+    <div class="st"><div class="lb">指導者数</div><div class="vl">${Object.keys(tutors).length}</div></div>
+    <div class="st"><div class="lb">生徒数</div><div class="vl">${Object.keys(fs).length}</div></div>
+  </div>
+
+  <div class="card"><div class="ch"><h3>生徒別キャンセル回数</h3></div>
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>生徒ID</th><th>氏名</th><th>キャンセル回数</th><th>状態</th></tr></thead>
+    <tbody>${Object.entries(cancelMap).length===0?`<tr><td colspan="4" style="text-align:center;color:var(--tx2);padding:16px">キャンセルなし</td></tr>`:
+      Object.entries(cancelMap).sort((a,b)=>b[1]-a[1]).map(([sid,cnt])=>{
+        const st=fs[sid];
+        const warn=cnt>=5?'bx-rd':cnt>=3?'bx-am':'bx-gy';
+        const msg=cnt>=5?'⚠️ 多数キャンセル':cnt>=3?'要注意':'';
+        return`<tr>
+          <td style="font-family:var(--mn)">${esc(sid)}</td>
+          <td>${esc(st?st.name:sid)}</td>
+          <td><span class="bx ${warn}">${cnt}回</span></td>
+          <td style="font-size:12px;color:var(--rd)">${msg}</td>
+        </tr>`;}).join('')}
+    </tbody></table></div>
+  </div>
+
+  <div class="card"><div class="ch">
+    <h3>指導者欠勤管理</h3>
+    <button class="btn btn-rd btn-sm" onclick="modalAddAbsence()">＋ 欠勤を登録</button>
+  </div>
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>日付</th><th>指導者</th><th>欠勤回数</th><th>理由</th><th>通知送信</th></tr></thead>
+    <tbody>${tutorAbsences.length===0?`<tr><td colspan="5" style="text-align:center;color:var(--tx2);padding:16px">欠勤記録なし</td></tr>`:
+      [...tutorAbsences].sort((a,b)=>b.date.localeCompare(a.date)).map(a=>{
+        const t=tutors[a.tutorId];const d=pd(a.date);
+        const cnt=absMap[a.tutorId]||0;
+        const affected=reservations.filter(r=>r.tutorId===a.tutorId&&r.date===a.date).length;
+        return`<tr>
+          <td style="white-space:nowrap">${d.getMonth()+1}/${d.getDate()}（${WD[d.getDay()]}）</td>
+          <td>${esc(t?t.name:a.tutorId)}</td>
+          <td><span class="bx ${cnt>=3?'bx-rd':cnt>=2?'bx-am':'bx-gy'}">${cnt}回</span></td>
+          <td>${esc(a.reason)}</td>
+          <td style="font-size:12px;color:var(--tx2)">${affected}名に通知済</td>
+        </tr>`;}).join('')}
+    </tbody></table></div>
+  </div>
+
+  <div class="card"><div class="ch"><h3>全予約一覧</h3></div>
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>日付</th><th>コマ</th><th>生徒</th><th>指導者</th><th>科目</th><th>範囲</th><th>目的</th></tr></thead>
+    <tbody>${all.length===0?`<tr><td colspan="7" style="text-align:center;color:var(--tx2);padding:20px">予約なし</td></tr>`:all.map(r=>{
+      const d=pd(r.date);const st=fs[r.studentId];const t=tutors[r.tutorId];
+      return`<tr><td style="white-space:nowrap">${d.getMonth()+1}/${d.getDate()}（${WD[d.getDay()]}）</td>
+      <td>コマ${r.slotIdx+1}</td><td>${esc(st?st.name:r.studentId)}</td>
+      <td>${esc(t?t.name:r.tutorId)}</td><td><span class="bx bx-gn">${esc(r.subject)}</span></td>
+      <td>${esc(r.range)}</td><td>${esc(r.purpose)}</td></tr>`;}).join('')}
+    </tbody></table></div>
+  </div>
+
+  <div class="card"><div class="ch"><h3>キャンセル記録</h3></div>
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>日付</th><th>コマ</th><th>生徒</th><th>指導者</th><th>科目</th><th>理由</th><th>取消日時</th></tr></thead>
+    <tbody>${cancelled.length===0?`<tr><td colspan="7" style="text-align:center;color:var(--tx2);padding:20px">記録なし</td></tr>`:cancelled.map(r=>{
+      const d=pd(r.date);const st=fs[r.studentId];const t=tutors[r.tutorId];
+      return`<tr><td style="white-space:nowrap">${d.getMonth()+1}/${d.getDate()}（${WD[d.getDay()]}）</td>
+      <td>コマ${r.slotIdx+1}</td><td>${esc(st?st.name:r.studentId)}</td>
+      <td>${esc(t?t.name:r.tutorId)}</td><td>${esc(r.subject)}</td>
+      <td style="color:var(--rd)">${esc(r.cancelReason)}</td>
+      <td style="font-family:var(--mn);font-size:11px;white-space:nowrap">${fdt(r.cancelledAt)}</td></tr>`;}).join('')}
+    </tbody></table></div>
+  </div>`;
+}
+
+function modalAddAbsence(){
+  const tList=Object.values(tutors);
+  if(!tList.length){alert('指導者が登録されていません');return;}
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>欠勤を登録</h3><p class="ms">欠勤を登録すると、その日に予約している生徒に自動通知されます</p>
+    <div class="fg"><label>指導者</label>
+      <select id="ab-tid" onchange="updateAbsenceDates()">${tList.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('')}</select>
+    </div>
+    <div class="fg"><label>欠勤日（シフトのある日のみ表示）</label>
+      <select id="ab-date"><option value="">読み込み中...</option></select>
+    </div>
+    <div class="fg"><label>欠勤理由</label><input type="text" id="ab-reason" placeholder="体調不良、急用 など"/></div>
+    <div class="err" id="ab-e"></div>
+    <div class="ma">
+      <button class="btn btn-gh" onclick="CM()">キャンセル</button>
+      <button class="btn btn-rd" onclick="doAddAbsence()">登録・通知送信</button>
+    </div>`);
+  updateAbsenceDates();
+}
+function updateAbsenceDates(){
+  const tid=document.getElementById('ab-tid').value;
+  const sel=document.getElementById('ab-date');
+  const dates=[];
+  for(let i=0;i<=90;i++){
+    const d=new Date();d.setDate(d.getDate()+i);
+    if(d.getDay()===0)continue;
+    const ds=ldate(d);
+    const slots=getTutorSlots(tid,ds);
+    if(slots.length>0)dates.push({ds,d});
+  }
+  sel.innerHTML=dates.length===0?'<option value="">シフトのある日がありません</option>':
+    dates.map(({ds,d})=>`<option value="${ds}">${d.getMonth()+1}月${d.getDate()}日（${WD[d.getDay()]}）</option>`).join('');
+}
+function doAddAbsence(){
+  const tid=document.getElementById('ab-tid').value;
+  const date=document.getElementById('ab-date').value;
+  const reason=document.getElementById('ab-reason').value.trim();
+  if(!date){document.getElementById('ab-e').textContent='欠勤日を選んでください';return;}
+  if(!reason){document.getElementById('ab-e').textContent='理由を入力してください';return;}
+  if(tutorAbsences.find(a=>a.tutorId===tid&&a.date===date)){document.getElementById('ab-e').textContent='この日はすでに欠勤登録済みです';return;}
+  processTutorAbsence(tid,date,reason);
+  saveToStorage();CM();pgAllRes(document.getElementById('ct'));
+}
+
+// ═══════════════════════════ ADMIN: MANAGE TUTORS ═══════════════════════════
+function pgMgrT(C){
+  const list=Object.values(tutors);
+  const filterSub=window._mgrTFilterSub||'';
+  const filterGrade=window._mgrTFilterGrade||'';
+  let filtered=list;
+  if(filterSub)filtered=filtered.filter(t=>t.subjects.includes(filterSub));
+  if(filterGrade)filtered=filtered.filter(t=>(t.grade||'')=== filterGrade);
+  C.innerHTML=`
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+    <h3 style="font-size:15px;font-weight:700">指導者一覧（${list.length}名）</h3>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-bl btn-sm" onclick="mImportTutors()">📥 CSVインポート</button>
+      <button class="btn btn-gh btn-sm" onclick="doExportTutors()">📤 CSVエクスポート</button>
+      <button class="btn btn-gn" onclick="mAddTutor()">＋ 指導者を追加</button>
+    </div>
+  </div>
+  <div class="sbar" style="margin-bottom:14px">
+    <div class="fg" style="min-width:150px"><label>科目で絞り込み</label>
+      <select onchange="window._mgrTFilterSub=this.value;pgMgrT(document.getElementById('ct'))">
+        <option value="">すべての科目</option>
+        ${ALL_SJ.map(s=>`<option value="${esc(s)}" ${filterSub===s?'selected':''}>${esc(s)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="fg" style="min-width:150px"><label>在籍学年で絞り込み</label>
+      <select onchange="window._mgrTFilterGrade=this.value;pgMgrT(document.getElementById('ct'))">
+        <option value="">すべての学年</option>
+        ${TUTOR_GRADES.map(g=>`<option value="${esc(g)}" ${filterGrade===g?'selected':''}>${esc(g)}</option>`).join('')}
+      </select>
+    </div>
+    ${(filterSub||filterGrade)?`<button class="btn btn-gh btn-sm" style="align-self:flex-end" onclick="window._mgrTFilterSub='';window._mgrTFilterGrade='';pgMgrT(document.getElementById('ct'))">✕ クリア</button>`:''}
+    <span style="font-size:12px;color:var(--tx2);align-self:flex-end">表示：<strong>${filtered.length}</strong> / ${list.length} 件</span>
+  </div>
+  <div class="card">
+    <div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th style="min-width:80px">ID</th><th style="min-width:90px">名前</th><th style="min-width:90px">在籍学年</th><th style="min-width:160px">指導可能科目</th><th style="min-width:120px">一言</th><th style="min-width:110px">操作</th></tr></thead>
+      <tbody>${filtered.length===0?`<tr><td colspan="6" style="text-align:center;color:var(--tx2);padding:20px">該当なし</td></tr>`:filtered.map(t=>`<tr>
+        <td style="font-family:var(--mn);white-space:nowrap">${esc(t.id)}</td>
+        <td style="font-weight:500;white-space:nowrap">${esc(t.name)}</td>
+        <td><span class="bx bx-pu">${esc(t.grade||'未設定')}</span></td>
+        <td><div class="stags">${t.subjects.map(s=>`<span class="stag">${esc(s)}</span>`).join('')}</div></td>
+        <td style="font-size:12px;color:var(--tx2)">${esc(t.bio||'—')}</td>
+        <td><div style="display:flex;gap:6px;flex-wrap:nowrap">
+          <button class="btn btn-gh btn-sm" onclick="mEditTutor('${t.id}')">編集</button>
+          <button class="btn btn-rd btn-sm" onclick="delTutor('${t.id}')">削除</button>
+        </div></td></tr>`).join('')}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+function mAddTutor(){
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>指導者を追加</h3><p class="ms">新しい指導者情報を入力してください</p>
+    <div class="fr">
+      <div class="fg"><label>ユーザーID（英数字）</label><input type="text" id="at-id" placeholder="tutor03"/></div>
+      <div class="fg"><label>名前</label><input type="text" id="at-nm" placeholder="山本 先生"/></div>
+    </div>
+    <div class="fg"><label>パスワード</label>${pwField('at-pw','パスワードを設定')}</div>
+    <div class="fg"><label>在籍学年（管理者のみ表示）</label>
+      <select id="at-grade">${TUTOR_GRADES.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('')}</select>
+    </div>
+    <div class="fg"><label>指導可能科目（複数選択可）</label><div class="chips" id="at-chips">${ALL_SJ.map(s=>`<span class="chip" onclick="this.classList.toggle('on')">${esc(s)}</span>`).join('')}</div></div>
+    <div class="fg"><label>一言・自己紹介</label><input type="text" id="at-bio" placeholder="得意科目など"/></div>
+    <div class="err" id="at-e"></div>
+    <div class="ma">
+      <button class="btn btn-gh" onclick="CM()">キャンセル</button>
+      <button class="btn btn-dk" onclick="doAddTutor()">追加</button>
+    </div>`);
+}
+function doAddTutor(){
+  const id=document.getElementById('at-id').value.trim();
+  const nm=document.getElementById('at-nm').value.trim();
+  const pw=document.getElementById('at-pw').value;
+  const grade=document.getElementById('at-grade').value;
+  const bio=document.getElementById('at-bio').value.trim();
+  const subs=[...document.querySelectorAll('#at-chips .chip.on')].map(c=>c.textContent);
+  if(!id||!nm||!pw){document.getElementById('at-e').textContent='ID・名前・パスワードは必須です';return;}
+  if(tutors[id]||id===ADMIN.id){document.getElementById('at-e').textContent='このIDはすでに使われています';return;}
+  if(!subs.length){document.getElementById('at-e').textContent='科目を1つ以上選んでください';return;}
+  tutors[id]={id,name:nm,pw,subjects:subs,bio,grade};
+  schedules[id]=defaultSchedule(id);
+  logChange('指導者追加',`ID:${id} 名前:${nm}`);
+  saveToStorage();CM();pgMgrT(document.getElementById('ct'));
+}
+function mEditTutor(tid){
+  const t=tutors[tid];if(!t)return;
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>指導者を編集</h3><p class="ms">ID: ${esc(tid)}</p>
+    <div class="fg"><label>名前</label><input type="text" id="et-nm" value="${esc(t.name)}"/></div>
+    <div class="fg"><label>新パスワード（変更する場合のみ）</label>${pwField('et-pw','空欄で変更しない')}</div>
+    <div class="fg"><label>在籍学年（管理者のみ表示）</label>
+      <select id="et-grade">${TUTOR_GRADES.map(g=>`<option value="${esc(g)}" ${(t.grade||'')=== g?'selected':''}>${esc(g)}</option>`).join('')}</select>
+    </div>
+    <div class="fg"><label>指導可能科目</label><div class="chips" id="et-chips">${ALL_SJ.map(s=>`<span class="chip ${t.subjects.includes(s)?'on':''}" onclick="this.classList.toggle('on')">${esc(s)}</span>`).join('')}</div></div>
+    <div class="fg"><label>一言・自己紹介</label><input type="text" id="et-bio" value="${esc(t.bio||'')}"/></div>
+    <div class="err" id="et-e"></div>
+    <div class="ma">
+      <button class="btn btn-gh" onclick="CM()">キャンセル</button>
+      <button class="btn btn-dk" onclick="doEditTutor('${tid}')">保存</button>
+    </div>`);
+}
+function doEditTutor(tid){
+  const t=tutors[tid];if(!t)return;
+  const nm=document.getElementById('et-nm').value.trim();
+  const pw=document.getElementById('et-pw').value;
+  const subs=[...document.querySelectorAll('#et-chips .chip.on')].map(c=>c.textContent);
+  if(!nm){document.getElementById('et-e').textContent='名前は必須です';return;}
+  if(!subs.length){document.getElementById('et-e').textContent='科目を1つ以上選んでください';return;}
+  t.name=nm;t.bio=document.getElementById('et-bio').value.trim();t.subjects=subs;
+  t.grade=document.getElementById('et-grade').value;
+  if(pw)t.pw=pw;
+  CM();pgMgrT(document.getElementById('ct'));
+}
+function delTutor(tid){
+  const _delNm=tutors[tid]?.name||tid;
+  if(!confirm(`「${_delNm}」を削除しますか？`))return;
+  logChange('指導者削除',`ID:${tid} 名前:${_delNm}`);
+  delete tutors[tid];delete schedules[tid];
+  saveToStorage();
+  if(calTid===tid)calTid=Object.keys(tutors)[0]||null;
+  pgMgrT(document.getElementById('ct'));
+}
+
+// ═══════════════════════════ ADMIN: SHIFTS ═══════════════════════════
+let _shView='week'; // 'week' | 'day'
+let _shDayOff=0;
+let _shFilterTid='';
+
+function pgMgrSh(C){
+  const tListAll=Object.values(tutors);
+  const tList=_shFilterTid?tListAll.filter(t=>t.id===_shFilterTid):tListAll;
+  const dates=wkd(WO);
+  const wl=`${dates[0].getMonth()+1}/${dates[0].getDate()} 〜 ${dates[5].getMonth()+1}/${dates[5].getDate()}`;
+  const dayStr=dstr(_shDayOff);
+  const dayD=pd(dayStr);
+  const dayLabel=`${dayD.getFullYear()}年${dayD.getMonth()+1}月${dayD.getDate()}日（${WD[dayD.getDay()]}）`;
+
+  let h=`
+  <div class="card" style="margin-bottom:16px">
+    <div class="ch"><h3>🖨️ 勤務者表を印刷</h3></div>
+    <div class="cb">
+      <p style="font-size:12px;color:var(--tx2);margin-bottom:10px">期間を指定して勤務者・コマ・予約状況を印刷します（日曜は自動スキップ）。</p>
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div class="fg" style="margin-bottom:0"><label>開始日</label><input type="date" id="print-from" value="${today()}"/></div>
+        <div class="fg" style="margin-bottom:0"><label>終了日</label><input type="date" id="print-to" value="${today()}"/></div>
+        <button class="btn btn-dk no-print" onclick="printDateRange()">🖨️ 印刷プレビュー</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;padding:14px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl)">
+    <div class="fg" style="margin-bottom:0;min-width:140px"><label>表示モード</label>
+      <div class="rtabs" style="margin-bottom:0">
+        <button class="${_shView==='week'?'on':''}" onclick="_shView='week';pgMgrSh(document.getElementById('ct'))">週表示</button>
+        <button class="${_shView==='day'?'on':''}" onclick="_shView='day';pgMgrSh(document.getElementById('ct'))">日表示</button>
+      </div>
+    </div>
+    <div class="fg" style="margin-bottom:0;min-width:160px"><label>指導者で絞り込み</label>
+      <select onchange="_shFilterTid=this.value;pgMgrSh(document.getElementById('ct'))">
+        <option value="">全員表示</option>
+        ${tListAll.map(t=>`<option value="${t.id}" ${_shFilterTid===t.id?'selected':''}>${esc(t.name)}</option>`).join('')}
+      </select>
+    </div>
+    <button class="btn btn-gn btn-sm" style="align-self:flex-end" onclick="adminAddShiftModal()">➕ シフト追加</button>
+    <button class="btn btn-pu btn-sm" style="align-self:flex-end;background:var(--pu-l);color:var(--pu);border:1px solid var(--pu-b)" onclick="pgTemplatesModal()">📋 テンプレート管理</button>
+    <button class="btn btn-gh btn-sm" style="align-self:flex-end" onclick="exportShiftJSON()">📤 シフトエクスポート</button>
+    <button class="btn btn-bl btn-sm" style="align-self:flex-end" onclick="importShiftModal()">📥 シフトインポート</button>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="ch"><h3>👥 一括テンプレート割り当て</h3><span style="font-size:12px;color:var(--tx2)">複数指導者に同じテンプレートを一括適用</span></div>
+    <div class="cb">
+      <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
+        <div>
+          <div style="font-size:12px;font-weight:500;color:var(--tx2);margin-bottom:6px">対象指導者（複数選択可）</div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            ${tListAll.map(t=>`<label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer">
+              <input type="checkbox" value="${t.id}" class="bulk-tutor-cb"> ${esc(t.name)}
+            </label>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:500;color:var(--tx2);margin-bottom:6px">テンプレート</div>
+          <select id="bulk-tpl" style="padding:7px 10px;border:1px solid var(--bd);border-radius:var(--r);font-size:13px;background:var(--bg)">
+            ${scheduleTemplates.map(tpl=>`<option value="${tpl.id}">${esc(tpl.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:500;color:var(--tx2);margin-bottom:6px">適用する曜日</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            ${[1,2,3,4,5,6].map(dow=>`<label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer">
+              <input type="checkbox" value="${dow}" class="bulk-dow-cb" ${dow>=1&&dow<=5?'checked':''}> ${WD[dow]}
+            </label>`).join('')}
+          </div>
+        </div>
+        <button class="btn btn-dk" style="align-self:flex-end;margin-top:8px" onclick="doBulkAssign()">一括適用</button>
+      </div>
+    </div>
+  </div>
+
+  ${_shView==='week'?`
+  <div class="cal-hd">
+    <div class="cnav"><button onclick="shWk(-1)">&#8249;</button><span>${wl}</span><button onclick="shWk(1)">&#8250;</button></div>
+    <button class="btn btn-gh btn-sm" onclick="shWk(0,1)">今週</button>
+  </div>`:`
+  <div class="cal-hd">
+    <div class="cnav">
+      <button onclick="_shDayOff--;pgMgrSh(document.getElementById('ct'))">&#8249;</button>
+      <span>${dayLabel}</span>
+      <button onclick="_shDayOff++;pgMgrSh(document.getElementById('ct'))">&#8250;</button>
+    </div>
+    <button class="btn btn-gh btn-sm" onclick="_shDayOff=0;pgMgrSh(document.getElementById('ct'))">今日</button>
+  </div>`}`;
+
+  if(!tList.length){h+='<p style="color:var(--tx2);padding:20px">対象の指導者がいません</p>';C.innerHTML=h;return;}
+
+  if(_shView==='week'){
+    tList.forEach(t=>{
+      h+=`<div class="card" style="margin-bottom:14px">
+        <div class="ch">
+          <div style="display:flex;align-items:center;gap:8px">
+            <h3>${esc(t.name)}</h3>
+            <span class="bx bx-pu" style="font-size:11px">${esc(t.grade||'')}</span>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-bl btn-sm" onclick="adminAddOverrideModal('${t.id}')">＋ 個別日設定</button>
+            <button class="btn btn-gn btn-sm" onclick="adminEditSchModal('${t.id}')">📝 週間設定を編集</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;padding:14px">
+          <div style="font-size:10px;color:var(--tx3);margin-bottom:6px;display:flex;gap:12px;flex-wrap:wrap">
+            <span>🟩 空きコマ</span><span>🟧 生徒予約済</span><span>🟦 別業務</span>
+            <span style="margin-left:8px;color:var(--tx2)">💡 日付をダブルクリックで詳細表示</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(6,minmax(100px,1fr));gap:6px;min-width:520px">
+            ${dates.map(d=>{
+              const ds=ldate(d);
+              const dow=d.getDay();
+              const slots=getTutorSlots(t.id,ds);
+              const isWork=slots.length>0;
+              const isAbs=isTutorAbsent(t.id,ds);
+              const isOv=schedules[t.id]?.overrides[ds]!==undefined;
+              const stuRes=reservations.filter(r=>r.tutorId===t.id&&r.date===ds);
+              const admRes=adminReservations.filter(r=>r.tutorId===t.id&&r.date===ds);
+              const rCount=stuRes.length;
+              const aResCount=admRes.length;
+              const freeCount=isWork&&!isAbs?slots.filter((_,i)=>!stuRes.some(r=>r.slotIdx===i)&&!admRes.some(r=>r.slotIdx===i)).length:0;
+              // color bars: one row per slot
+              const slotBars=isWork&&!isAbs?slots.map((sl,i)=>{
+                const hasStu=stuRes.some(r=>r.slotIdx===i);
+                const hasAdm=admRes.some(r=>r.slotIdx===i);
+                const clr=hasAdm?'var(--bl)':hasStu?'var(--am)':'var(--gr)';
+                const lbl=hasAdm?'別業務':hasStu?`生徒予約`:sl.start+'〜'+sl.end+' 空き';
+                return`<div title="${sl.start}〜${sl.end} ${lbl}" style="height:5px;border-radius:2px;background:${clr};margin-bottom:2px"></div>`;
+              }).join(''):'';
+              // days offset for drill-down
+              const todayD=new Date();todayD.setHours(0,0,0,0);
+              const dOff=Math.round((d.getTime()-todayD.getTime())/86400000);
+              const isToday=dOff===0;
+              return`<div ondblclick="_shView='day';_shDayOff=${dOff};pgMgrSh(document.getElementById('ct'))" style="border:2px solid ${isToday?'var(--gr)':'var(--bd)'};border-radius:var(--r);padding:8px;text-align:center;background:${isAbs?'var(--rd-l)':isWork?'var(--gr-l)':'var(--sf2)'};cursor:pointer;user-select:none;transition:box-shadow .15s" onmouseenter="this.style.boxShadow='0 2px 8px rgba(0,0,0,.15)'" onmouseleave="this.style.boxShadow='none'">
+                <div style="font-size:11px;color:${isToday?'var(--gr)':'var(--tx3)'};font-weight:${isToday?'700':'400'}">${WD[dow]} ${d.getDate()}</div>
+                <div style="font-size:12px;font-weight:600;color:${isAbs?'var(--rd)':isWork?'var(--tx)':'var(--tx3)'};margin:3px 0">
+                  ${isAbs?'欠勤':isWork?`${slots.length}コマ`:'休み'}
+                </div>
+                ${slotBars?`<div style="margin:5px 0">${slotBars}</div>`:''}
+                ${isWork&&!isAbs?`<div style="display:flex;justify-content:center;gap:5px;flex-wrap:wrap;margin-top:3px">
+                  ${freeCount>0?`<span style="font-size:10px;font-weight:700;color:var(--gr)">空${freeCount}</span>`:''}
+                  ${rCount>0?`<span style="font-size:10px;font-weight:700;color:var(--am)">予${rCount}</span>`:''}
+                  ${aResCount>0?`<span style="font-size:10px;font-weight:700;color:var(--bl)">業${aResCount}</span>`:''}
+                  ${freeCount===0&&rCount===0&&aResCount===0?`<span style="font-size:10px;color:var(--tx3)">—</span>`:''}
+                </div>`:''}
+                ${isOv&&!isAbs?`<div style="font-size:9px;color:var(--am);margin-top:4px;font-weight:500">個別設定</div>`:''}
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>`;
+    });
+  } else {
+    // Day view
+    const isSun=dayD.getDay()===0;
+    if(isSun){
+      h+=`<div class="card"><div class="cb" style="text-align:center;padding:30px;color:var(--tx3)">
+        <div style="font-size:32px;margin-bottom:8px">🔒</div>
+        <div style="font-size:15px;font-weight:700">日曜日は定休日です</div>
+        <div style="font-size:13px;margin-top:6px">他の日を選択してください</div>
+      </div></div>`;
+    } else {
+      const fs=flatStudents();
+      tList.forEach(t=>{
+        const slots=getTutorSlots(t.id,dayStr);
+        const isWork=slots.length>0;
+        const isOv=schedules[t.id]?.overrides[dayStr]!==undefined;
+        const isAbs=isTutorAbsent(t.id,dayStr);
+        h+=`<div class="card" style="margin-bottom:14px">
+          <div class="ch">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <h3>${esc(t.name)}</h3>
+              <span class="bx bx-pu" style="font-size:11px">${esc(t.grade||'')}</span>
+              ${isAbs?'<span class="bx bx-rd">欠勤登録済</span>':isOv?'<span class="bx bx-am">個別設定</span>':''}
+              ${!isAbs?`<span class="bx ${isWork?'bx-gn':'bx-gy'}">${isWork?slots.length+'コマ勤務':'この日は休み'}</span>`:''}
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn btn-bl btn-sm" onclick="adminAddOverrideModal('${t.id}')">＋ 個別日設定</button>
+              <button class="btn btn-gn btn-sm" onclick="adminEditSchModal('${t.id}')">📝 週間設定</button>
+            </div>
+          </div>
+          <div class="cb">
+            ${isAbs?`<div style="background:var(--rd-l);border:1px solid var(--rd-b);border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;gap:12px">
+              <span style="font-size:24px">🔴</span>
+              <div style="flex:1">
+                <div style="font-weight:700;color:var(--rd);font-size:14px">欠勤日</div>
+                <div style="font-size:12px;color:var(--tx2);margin-top:3px">${esc(tutorAbsences.filter(a=>a.tutorId===t.id&&a.date===dayStr).map(a=>a.reason).join('、'))}</div>
+              </div>
+              <button class="btn btn-gh btn-sm" onclick="cancelAbsence('${t.id}','${dayStr}')">欠勤解除</button>
+            </div>`:
+            !isWork?`<p style="color:var(--tx3);font-size:13px">この日はシフトがありません</p>`:
+            `<div style="display:flex;flex-wrap:wrap;gap:10px">
+              ${slots.map((sl,i)=>{
+                const res=getRes(dayStr,i,t.id);
+                const stu=res&&!res.isAdmin?fs[res.studentId]:null;
+                const isAdminRes=res?.isAdmin;
+                return`<div style="border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px;min-width:160px;background:${isAdminRes?'var(--bl-l)':res?'var(--am-l)':'var(--gr-l)'}">
+                  <div style="font-size:11px;color:var(--tx3);margin-bottom:6px">コマ${i+1}　${sl.start}〜${sl.end}</div>
+                  ${isAdminRes?`<div style="font-size:13px;font-weight:700;color:var(--bl)">【${esc(res.adminType)}】</div>
+                    <div style="font-size:11px;color:var(--tx2);margin-top:2px">${esc(res.memo||'メモなし')}</div>
+                    <button class="btn btn-rd btn-xs" style="margin-top:6px" onclick="cancelAdminRes(${res.id})">解除</button>`:
+                  res?`<div style="font-size:14px;font-weight:700">${esc(stu?stu.name:res.studentId)}</div>
+                    <div style="font-size:12px;color:var(--gr);margin-top:2px">📚 ${esc(res.subject)}</div>`:
+                  `<div style="font-size:13px;color:var(--gr);margin-bottom:6px">（空き）</div>
+                    <button class="btn btn-bl btn-xs" onclick="adminBookSlot('${dayStr}',${i},'${t.id}')">🔒 管理者予約</button>`}
+                </div>`;
+              }).join('')}
+            </div>`}
+          </div>
+        </div>`;
+      });
+    }
+  }
+  C.innerHTML=h;
+}
+function shWk(d,r){if(r)WO=0;else WO+=d;pgMgrSh(document.getElementById('ct'));}
+
+// ═══════════════════════════ SHIFT CSV / JSON ═══════════════════════════
+function exportShiftJSON(){
+  const data={exportedAt:new Date().toISOString(),schedules:{}};
+  Object.entries(schedules).forEach(([tid,sc])=>{
+    const t=tutors[tid];
+    data.schedules[tid]={tutorName:t?t.name:'',weeklyTemplate:sc.weeklyTemplate,overrides:sc.overrides};
+  });
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='shifts_export.json';a.click();
+}
+function importShiftModal(){
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>シフトインポート</h3>
+    <p class="ms">エクスポートしたJSONファイルを読み込みます</p>
+    <div class="fg"><label>JSONファイル</label><input type="file" id="sh-f" accept=".json"/></div>
+    <div style="font-size:12px;color:var(--am);background:var(--am-l);border:1px solid var(--am-b);border-radius:var(--r);padding:10px;margin-top:8px">
+      ⚠️ 一致するIDの指導者のシフトが上書きされます。不明なIDはスキップされます。
+    </div>
+    <div class="err" id="sh-e"></div>
+    <div class="ma">
+      <button class="btn btn-gh" onclick="CM()">キャンセル</button>
+      <button class="btn btn-dk" onclick="doImportShift()">インポート</button>
+    </div>`);
+}
+function doImportShift(){
+  const f=document.getElementById('sh-f').files[0];
+  if(!f){document.getElementById('sh-e').textContent='ファイルを選択してください';return;}
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!data.schedules){document.getElementById('sh-e').textContent='フォーマットが正しくありません';return;}
+      let imported=0,skipped=0;
+      Object.entries(data.schedules).forEach(([tid,sc])=>{
+        if(tutors[tid]){schedules[tid]={weeklyTemplate:sc.weeklyTemplate||{},overrides:sc.overrides||{}};imported++;}
+        else skipped++;
+      });
+      saveToStorage();CM();pgMgrSh(document.getElementById('ct'));
+      setTimeout(()=>alert(`インポート完了：${imported}件更新、${skipped}件スキップ（未登録のID）`),100);
+    }catch(err){document.getElementById('sh-e').textContent='JSONの解析に失敗しました: '+err.message;}
+  };
+  r.readAsText(f,'UTF-8');
+}
+
+// ═══════════════════════════ PRINT DATE RANGE ═══════════════════════════
+function printDateRange(){
+  const fromStr=document.getElementById('print-from').value;
+  const toStr=document.getElementById('print-to').value;
+  if(!fromStr||!toStr){alert('開始日と終了日を選択してください');return;}
+  if(fromStr>toStr){alert('終了日は開始日以降にしてください');return;}
+  const allDates=[];
+  const cur=new Date(fromStr+'T00:00:00'),end=new Date(toStr+'T00:00:00');
+  while(cur<=end){allDates.push(ldate(cur));cur.setDate(cur.getDate()+1);}
+  if(allDates.length>31){alert('印刷期間は最大31日間です');return;}
+  const fs=flatStudents();
+  const tList=_shFilterTid?[tutors[_shFilterTid]].filter(Boolean):Object.values(tutors);
+  const now=new Date();
+  const printedAt=`${now.getFullYear()}/${z(now.getMonth()+1)}/${z(now.getDate())} ${z(now.getHours())}:${z(now.getMinutes())}`;
+  let allPages='',firstPage=true;
+  allDates.forEach(dateStr=>{
+    const d=pd(dateStr);const dow=d.getDay();
+    if(dow===0)return;
+    const dateLabel=`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${WD[dow]}）`;
+    const tutorSlotData=tList.map(t=>({t,slots:getTutorSlots(t.id,dateStr)})).filter(({slots})=>slots.length>0);
+    const pageBreak=firstPage?'':'page-break-before:always;';firstPage=false;
+    if(!tutorSlotData.length){
+      allPages+=`<div style="${pageBreak}font-family:'Noto Sans JP',sans-serif;padding:24px">
+        <h1 style="font-size:20px;font-weight:700;border-bottom:2px solid #1a1a18;padding-bottom:8px;margin-bottom:16px">${esc(dateLabel)}　勤務者表</h1>
+        <p style="color:#888">この日は勤務する指導者がいません。</p></div>`;return;
+    }
+    const maxSlots=Math.max(...tutorSlotData.map(({slots})=>slots.length));
+    let hd=`<th style="border:1px solid #bbb;padding:8px 12px;background:#e8e8e6;white-space:nowrap">指導者</th>`;
+    for(let i=0;i<maxSlots;i++)hd+=`<th style="border:1px solid #bbb;padding:8px 12px;background:#e8e8e6;min-width:110px">コマ${i+1}</th>`;
+    const rows=tutorSlotData.map(({t,slots})=>{
+      let cells=`<td style="border:1px solid #ddd;padding:8px 12px;font-weight:700;white-space:nowrap;background:#fafaf8">${esc(t.name)}</td>`;
+      for(let i=0;i<maxSlots;i++){
+        const slot=slots[i];
+        if(!slot){cells+=`<td style="border:1px solid #ddd;padding:8px;text-align:center;color:#ccc;font-size:11px">—</td>`;continue;}
+        const res=getRes(dateStr,i,t.id);const stu=res?fs[res.studentId]:null;
+        const tstr=`<div style="font-size:10px;color:#888;margin-bottom:3px">${slot.start}〜${slot.end}</div>`;
+        if(res&&stu)cells+=`<td style="border:1px solid #ddd;padding:8px 10px;vertical-align:top">${tstr}<strong style="font-size:13px">${esc(stu.name)}</strong><br><span style="font-size:11px;color:#2a5c45">📚 ${esc(res.subject)}</span></td>`;
+        else if(res)cells+=`<td style="border:1px solid #ddd;padding:8px 10px;vertical-align:top">${tstr}<span style="font-size:12px;color:#666">${esc(res.studentId)} / ${esc(res.subject)}</span></td>`;
+        else cells+=`<td style="border:1px solid #ddd;padding:8px 10px;vertical-align:top;background:#f9fff9">${tstr}<span style="font-size:12px;color:#aaa">（空き）</span></td>`;
+      }
+      return`<tr>${cells}</tr>`;
+    }).join('');
+    allPages+=`<div style="${pageBreak}font-family:'Noto Sans JP',sans-serif;padding:24px;max-width:960px">
+      <h1 style="font-size:20px;font-weight:700;border-bottom:2px solid #1a1a18;padding-bottom:8px;margin-bottom:4px">${esc(dateLabel)}　勤務者表</h1>
+      <p style="font-size:11px;color:#888;margin-bottom:16px">印刷日時：${printedAt}　指導予約システム</p>
+      <table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr>${hd}</tr></thead><tbody>${rows}</tbody></table>
+      <p style="font-size:10px;color:#bbb;margin-top:14px;border-top:1px solid #eee;padding-top:6px">（空き）=予約可 / 生徒名・科目=予約済 / —=コマなし</p>
+    </div>`;
+  });
+  if(!allPages){alert('指定期間に勤務日がありません（日曜はスキップ）');return;}
+  const pa=document.getElementById('print-area');
+  pa.innerHTML=allPages;pa.style.display='block';
+  window.print();
+  setTimeout(()=>{pa.innerHTML='';pa.style.display='none';},500);
+}
+
+// ═══════════════════════════ ADMIN: SCHEDULE EDIT ═══════════════════════════
+function adminEditSchModal(tid){
+  const t=tutors[tid];if(!t)return;
+  const sc=schedules[tid];if(!sc)return;
+  const wt=sc.weeklyTemplate;
+  const slotsHtml=[0,1,2,3,4,5,6].map(dow=>{
+    const isSun=dow===0;
+    const slots=wt[dow]||[];const isWork=slots.length>0;
+    return`<div class="sch-day">
+      <div class="sch-day-head ${isSun?'off':isWork?'work':'off'}">${WD[dow]}<br><span style="font-size:10px">${isSun?'定休日':isWork?slots.length+'コマ':'休み'}</span></div>
+      <div class="sch-day-body">
+        ${isSun?`<div style="font-size:10px;color:var(--tx3);text-align:center;padding:6px 0">日曜定休</div>`:
+          slots.map((sl,i)=>`<div class="sch-slot"><span style="font-size:10px">${sl.start}〜${sl.end}</span>
+            <button onclick="adminRmWeekSlot('${tid}',${dow},${i})" title="削除">×</button></div>`).join('')+
+          `<select style="width:100%;font-size:10px;padding:2px 3px;border:1px dashed var(--bd);border-radius:4px;margin-bottom:3px;background:var(--bg);color:var(--tx2)" onchange="applyTplToDay('${tid}',${dow},this.value);this.value=''">
+            <option value="">📋 テンプレート適用</option>
+            ${scheduleTemplates.map(tpl=>`<option value="${tpl.id}">${esc(tpl.name)}</option>`).join('')}
+          </select>
+          <button class="add-slot-btn" onclick="adminAddWeekSlotModal('${tid}',${dow})">＋ コマ追加</button>`}
+      </div>
+    </div>`;
+  }).join('');
+  const ov=sc.overrides;
+  const ovEntries=Object.entries(ov).sort((a,b)=>a[0].localeCompare(b[0]));
+  const ovHtml=ovEntries.length===0?'<p style="font-size:13px;color:var(--tx2)">個別設定なし</p>':
+    ovEntries.map(([ds,ovSlots])=>{
+      const d=pd(ds);
+      const sDisp=ovSlots==='off'?'<span class="bx bx-gy">休み</span>':ovSlots.map(sl=>`<span class="bx bx-am">${sl.start}〜${sl.end}</span>`).join('');
+      return`<div class="ov-item"><span class="ov-date">${d.getMonth()+1}/${d.getDate()}（${WD[d.getDay()]}）</span>
+        <div class="ov-slots">${sDisp}</div>
+        <button onclick="adminRmOverride('${tid}','${ds}');adminEditSchModal('${tid}')" title="削除">×</button></div>`;
+    }).join('');
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>${esc(t.name)} スケジュール編集</h3>
+    <p class="ms">週間テンプレートと個別日設定を管理します</p>
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px">週間テンプレート</div>
+    <div class="sch-week">${slotsHtml}</div>
+    <hr class="div">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:700">個別日設定（上書き）</div>
+      <button class="btn btn-bl btn-sm" onclick="adminAddOverrideModal('${tid}')">＋ 日付を追加</button>
+    </div>
+    <div class="override-list">${ovHtml}</div>
+    <div class="ma"><button class="btn btn-dk" onclick="CM();pgMgrSh(document.getElementById('ct'))">完了・閉じる</button></div>`);
+}
+function adminAddWeekSlotModal(tid,dow){
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>${WD[dow]}曜日 コマを追加</h3><p class="ms">${esc(tutors[tid]?.name||tid)}</p>
+    <div class="fr">
+      <div class="fg"><label>開始時刻</label><input type="time" id="aws-s" value="15:30" step="600"/></div>
+      <div class="fg"><label>終了時刻</label><input type="time" id="aws-e" value="16:20" step="600"/></div>
+    </div>
+    <div class="fg"><label>コマ名（任意）</label><input type="text" id="aws-l" placeholder="コマ① など"/></div>
+    <div class="err" id="aws-err"></div>
+    <div class="ma">
+      <button class="btn btn-gh" onclick="adminEditSchModal('${tid}')">戻る</button>
+      <button class="btn btn-dk" onclick="adminDoAddWeekSlot('${tid}',${dow})">追加</button>
+    </div>`);
+}
+function adminDoAddWeekSlot(tid,dow){
+  const s=document.getElementById('aws-s').value;
+  const e=document.getElementById('aws-e').value;
+  const l=document.getElementById('aws-l').value||`コマ${(schedules[tid].weeklyTemplate[dow]||[]).length+1}`;
+  if(!s||!e){document.getElementById('aws-err').textContent='時刻を入力してください';return;}
+  if(s>=e){document.getElementById('aws-err').textContent='終了時刻は開始より後にしてください';return;}
+  const wt=schedules[tid].weeklyTemplate;
+  if(!wt[dow])wt[dow]=[];
+  wt[dow].push({start:s,end:e,label:l});
+  wt[dow].sort((a,b)=>a.start.localeCompare(b.start));
+  saveToStorage();adminEditSchModal(tid);
+}
+function adminRmWeekSlot(tid,dow,i){
+  const wt=schedules[tid].weeklyTemplate;
+  if(wt[dow])wt[dow].splice(i,1);
+  if(wt[dow]&&wt[dow].length===0)wt[dow]=null;
+  saveToStorage();adminEditSchModal(tid);
+}
+let adminOvRowId=0;
+function adminAddOverrideModal(tid){
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>個別日設定</h3><p class="ms">${esc(tutors[tid]?.name||tid)}</p>
+    <div class="fg"><label>対象日</label><input type="date" id="aov-d" min="${today()}"/></div>
+    <div class="fg"><label>設定タイプ</label>
+      <select id="aov-type" onchange="document.getElementById('aov-slots-area').style.display=this.value==='off'?'none':'block'">
+        <option value="custom">カスタム（コマを設定）</option>
+        <option value="off">休み（勤務なし）</option>
+      </select>
+    </div>
+    <div id="aov-slots-area">
+      <p style="font-size:12px;color:var(--tx2);margin-bottom:8px">コマを設定してください</p>
+      <div id="aov-slot-list"></div>
+      <button class="btn btn-bl btn-sm" onclick="addAdminOvSlotRow()" style="margin-top:6px">＋ コマを追加</button>
+    </div>
+    <div class="err" id="aov-err"></div>
+    <div class="ma">
+      <button class="btn btn-gh" onclick="CM()">キャンセル</button>
+      <button class="btn btn-dk" onclick="doAdminAddOverride('${tid}')">保存</button>
+    </div>`);
+  addAdminOvSlotRow();
+}
+function addAdminOvSlotRow(){
+  const rid=adminOvRowId++;
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:6px';
+  row.innerHTML=`<input type="time" value="15:30" step="600" style="flex:1;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--r);font-size:13px;background:var(--bg)"/>
+  <span style="font-size:12px;color:var(--tx2)">〜</span>
+  <input type="time" value="16:20" step="600" style="flex:1;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--r);font-size:13px;background:var(--bg)"/>
+  <button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--rd);font-size:16px">×</button>`;
+  document.getElementById('aov-slot-list').appendChild(row);
+}
+function doAdminAddOverride(tid){
+  const date=document.getElementById('aov-d').value;
+  if(!date){document.getElementById('aov-err').textContent='日付を選んでください';return;}
+  const type=document.getElementById('aov-type').value;
+  if(type==='off'){schedules[tid].overrides[date]='off';CM();pgMgrSh(document.getElementById('ct'));return;}
+  const rows=[...document.getElementById('aov-slot-list').children];
+  const slots=rows.map(row=>{const inputs=row.querySelectorAll('input[type=time]');return{start:inputs[0].value,end:inputs[1].value,label:'コマ'};}).filter(sl=>sl.start&&sl.end&&sl.start<sl.end);
+  if(!slots.length){document.getElementById('aov-err').textContent='有効なコマを1つ以上追加してください';return;}
+  slots.sort((a,b)=>a.start.localeCompare(b.start));
+  schedules[tid].overrides[date]=slots;
+  saveToStorage();CM();pgMgrSh(document.getElementById('ct'));
+}
+function adminRmOverride(tid,ds){
+  delete schedules[tid].overrides[ds];
+  saveToStorage();pgMgrSh(document.getElementById('ct'));
+}
+
+// ═══════════════════════════ PRINT DAY SCHEDULE ═══════════════════════════
+// ═══════════════════════════ TUTOR CSV IMPORT / EXPORT ═══════════════════════════
+function doExportTutors(){
+  const rows=[['ID','名前','在籍学年','指導科目（|区切り）','一言','パスワード']];
+  Object.values(tutors).forEach(t=>{
+    rows.push([t.id,t.name,t.grade||'',t.subjects.join('|'),t.bio||'',t.pw]);
+  });
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tutors_export.csv';a.click();
+}
+function mImportTutors(){
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>指導者CSVインポート</h3>
+    <p class="ms">「ID,名前,在籍学年,指導科目（|区切り）,一言,パスワード」の形式</p>
+    <div style="font-size:12px;color:var(--tx2);background:var(--sf2);border-radius:var(--r);padding:10px;margin-bottom:12px;font-family:var(--mn)">
+      例: t003,山本 先生,大学2年,数学|英語,理数系得意,pass123<br>
+      ※パスワード省略時は「password」が設定されます
+    </div>
+    <div class="fg"><label>CSVファイル</label><input type="file" id="tcsv-f" accept=".csv"/></div>
+    <div style="margin-top:8px;font-size:12px;color:var(--tx2)">または直接貼り付け：</div>
+    <div class="fg" style="margin-top:6px"><textarea id="tcsv-t" rows="5" placeholder="t003,山本 先生,大学2年,数学|英語,理数系得意,pass123"></textarea></div>
+    <div class="err" id="tcsv-e"></div>
+    <div class="ma">
+      <button class="btn btn-gh" onclick="CM()">キャンセル</button>
+      <button class="btn btn-dk" onclick="doImportTutors()">インポート</button>
+    </div>`);
+  document.getElementById('tcsv-f').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();r.onload=ev=>{document.getElementById('tcsv-t').value=ev.target.result;};r.readAsText(f,'UTF-8');
+  });
+}
+function doImportTutors(){
+  const raw=document.getElementById('tcsv-t').value.trim();
+  if(!raw){document.getElementById('tcsv-e').textContent='データを入力してください';return;}
+  const lines=raw.split('\n').map(l=>l.trim()).filter(l=>l);
+  let added=0,skipped=0;
+  lines.forEach(line=>{
+    const cols=line.split(',').map(c=>c.trim().replace(/^"|"$/g,''));
+    if(cols.length<2)return;
+    const [id,name,grade,subStr,bio,pw]=cols;
+    if(!id||!name){skipped++;return;}
+    if(id==='ID'){return;}
+    if(tutors[id]||id===ADMIN.id){skipped++;return;}
+    const subjects=subStr?subStr.split('|').map(s=>s.trim()).filter(s=>s):[];
+    tutors[id]={id,name,pw:pw||'password',subjects,bio:bio||'',grade:grade||''};
+    schedules[id]=defaultSchedule(id);
+    added++;
+  });
+  saveToStorage();CM();pgMgrT(document.getElementById('ct'));
+  setTimeout(()=>alert(`インポート完了：${added}件追加、${skipped}件スキップ\n※パスワード未設定の場合は初期値「password」が設定されます。`),100);
+}
+
+// ═══════════════════════════ AUTO LOGOUT ═══════════════════════════
+let _alTimer=null,_alActivity=null;
+const AL_TIMEOUT=5*60*1000; // 5 minutes
+function startAutoLogout(){
+  stopAutoLogout();
+  function reset(){
+    clearTimeout(_alTimer);
+    _alTimer=setTimeout(()=>{
+      alert('5分間操作がなかったためログアウトしました。');
+      doLogout();
+    },AL_TIMEOUT);
+  }
+  _alActivity=reset;
+  ['click','keydown','touchstart','scroll'].forEach(ev=>document.addEventListener(ev,_alActivity,{passive:true}));
+  reset();
+}
+function stopAutoLogout(){
+  clearTimeout(_alTimer);_alTimer=null;
+  if(_alActivity){
+    ['click','keydown','touchstart','scroll'].forEach(ev=>document.removeEventListener(ev,_alActivity));
+    _alActivity=null;
+  }
+}
+
+// ═══════════════════════════ SCHEDULE TEMPLATES ═══════════════════════════
+function applyTplToDay(tid,dow,tplId){
+  const tpl=scheduleTemplates.find(t=>t.id===tplId);if(!tpl)return;
+  const wt=schedules[tid].weeklyTemplate;
+  wt[dow]=tpl.slots.map(sl=>({...sl}));
+  saveToStorage();adminEditSchModal(tid);
+}
+function pgTemplatesModal(){
+  function tplList(){
+    if(!scheduleTemplates.length) return '<p style="font-size:13px;color:var(--tx2);padding:8px 0">テンプレートがありません</p>';
+    return scheduleTemplates.map(tpl=>`
+      <div style="background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r);padding:10px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:13px;margin-bottom:4px">${esc(tpl.name)}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px">
+            ${tpl.slots.map(sl=>`<span class="bx bx-am">${sl.start}〜${sl.end}${sl.label?' '+sl.label:''}</span>`).join('')}
+          </div>
+        </div>
+        <div style="display:flex;gap:5px;flex-shrink:0">
+          <button class="btn btn-gn btn-xs" onclick="tplEditModal('${tpl.id}')">編集</button>
+          <button class="btn btn-rd btn-xs" onclick="tplDelete('${tpl.id}')">削除</button>
+        </div>
+      </div>`).join('');
+  }
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>📋 テンプレート管理</h3>
+    <p class="ms">週間スケジュールに一括適用できるコマセットを管理します</p>
+    <div id="tpl-list-area">${tplList()}</div>
+    <div class="ma" style="justify-content:flex-start">
+      <button class="btn btn-dk" onclick="tplAddModal()">＋ 新規テンプレート</button>
+    </div>`);
+}
+function _refreshTplList(){
+  const el=document.getElementById('tpl-list-area');
+  if(!el)return;
+  if(!scheduleTemplates.length){el.innerHTML='<p style="font-size:13px;color:var(--tx2);padding:8px 0">テンプレートがありません</p>';return;}
+  el.innerHTML=scheduleTemplates.map(tpl=>`
+    <div style="background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r);padding:10px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:13px;margin-bottom:4px">${esc(tpl.name)}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px">
+          ${tpl.slots.map(sl=>`<span class="bx bx-am">${sl.start}〜${sl.end}${sl.label?' '+sl.label:''}</span>`).join('')}
+        </div>
+      </div>
+      <div style="display:flex;gap:5px;flex-shrink:0">
+        <button class="btn btn-gn btn-xs" onclick="tplEditModal('${tpl.id}')">編集</button>
+        <button class="btn btn-rd btn-xs" onclick="tplDelete('${tpl.id}')">削除</button>
+      </div>
+    </div>`).join('');
+}
+let _tplOvRowId=0;
+function _tplSlotsHtml(slots){
+  return slots.map(sl=>{
+    const rid=_tplOvRowId++;
+    return`<div id="tplr-${rid}" style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+      <input type="time" value="${sl.start}" step="600" style="flex:1;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--r);font-size:13px;background:var(--bg)"/>
+      <span style="font-size:12px;color:var(--tx2)">〜</span>
+      <input type="time" value="${sl.end}" step="600" style="flex:1;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--r);font-size:13px;background:var(--bg)"/>
+      <input type="text" value="${esc(sl.label||'')}" placeholder="コマ名" style="flex:1;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--r);font-size:13px;background:var(--bg)"/>
+      <button onclick="document.getElementById('tplr-${rid}').remove()" style="background:none;border:none;cursor:pointer;color:var(--rd);font-size:16px">×</button>
+    </div>`;
+  }).join('');
+}
+function _addTplSlotRow(){
+  const rid=_tplOvRowId++;
+  const row=document.createElement('div');
+  row.id=`tplr-${rid}`;
+  row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:6px';
+  row.innerHTML=`<input type="time" value="15:30" step="600" style="flex:1;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--r);font-size:13px;background:var(--bg)"/>
+    <span style="font-size:12px;color:var(--tx2)">〜</span>
+    <input type="time" value="16:20" step="600" style="flex:1;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--r);font-size:13px;background:var(--bg)"/>
+    <input type="text" placeholder="コマ名" style="flex:1;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--r);font-size:13px;background:var(--bg)"/>
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--rd);font-size:16px">×</button>`;
+  document.getElementById('tpl-slot-list').appendChild(row);
+}
+function tplAddModal(){
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>＋ 新規テンプレート</h3>
+    <div class="fg"><label>テンプレート名</label><input type="text" id="tpl-name" placeholder="例: 平日（標準）"/></div>
+    <div style="font-size:12px;font-weight:500;color:var(--tx2);margin-bottom:6px">コマ設定</div>
+    <div id="tpl-slot-list"></div>
+    <button class="btn btn-bl btn-sm" onclick="_addTplSlotRow()" style="margin-bottom:10px">＋ コマを追加</button>
+    <div class="err" id="tpl-err"></div>
+    <div class="ma">
+      <button class="btn btn-gh" onclick="pgTemplatesModal()">戻る</button>
+      <button class="btn btn-dk" onclick="_saveTpl(null)">保存</button>
+    </div>`);
+  _addTplSlotRow();
+}
+function tplEditModal(tplId){
+  const tpl=scheduleTemplates.find(t=>t.id===tplId);if(!tpl)return;
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>テンプレート編集</h3>
+    <div class="fg"><label>テンプレート名</label><input type="text" id="tpl-name" value="${esc(tpl.name)}"/></div>
+    <div style="font-size:12px;font-weight:500;color:var(--tx2);margin-bottom:6px">コマ設定</div>
+    <div id="tpl-slot-list">${_tplSlotsHtml(tpl.slots)}</div>
+    <button class="btn btn-bl btn-sm" onclick="_addTplSlotRow()" style="margin-bottom:10px">＋ コマを追加</button>
+    <div class="err" id="tpl-err"></div>
+    <div class="ma">
+      <button class="btn btn-gh" onclick="pgTemplatesModal()">戻る</button>
+      <button class="btn btn-dk" onclick="_saveTpl('${tplId}')">保存</button>
+    </div>`);
+}
+function _saveTpl(tplId){
+  const name=document.getElementById('tpl-name').value.trim();
+  if(!name){document.getElementById('tpl-err').textContent='テンプレート名を入力してください';return;}
+  const rows=[...document.getElementById('tpl-slot-list').children];
+  const slots=rows.map(row=>{
+    const inputs=row.querySelectorAll('input[type=time]');
+    const label=row.querySelector('input[type=text]').value.trim();
+    return{start:inputs[0].value,end:inputs[1].value,label};
+  }).filter(sl=>sl.start&&sl.end&&sl.start<sl.end);
+  if(!slots.length){document.getElementById('tpl-err').textContent='有効なコマを1つ以上追加してください';return;}
+  slots.sort((a,b)=>a.start.localeCompare(b.start));
+  if(tplId){
+    const tpl=scheduleTemplates.find(t=>t.id===tplId);
+    if(tpl){tpl.name=name;tpl.slots=slots;}
+  } else {
+    scheduleTemplates.push({id:'tpl-'+String(++tplIdSeq),name,slots});
+  }
+  saveToStorage();pgTemplatesModal();
+}
+function tplDelete(tplId){
+  if(!confirm('このテンプレートを削除しますか？'))return;
+  scheduleTemplates=scheduleTemplates.filter(t=>t.id!==tplId);
+  saveToStorage();_refreshTplList();
+}
+
+// ═══════════════════════════ ADMIN: ADD SHIFT ═══════════════════════════
+function adminAddShiftModal(){
+  const tidOpts=Object.values(tutors).map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>➕ シフト追加</h3>
+    <p class="ms">指定の指導者・日付にシフト（コマ）を追加します</p>
+    <div class="fg"><label>指導者</label><select id="asf-tid">${tidOpts}</select></div>
+    <div class="fg"><label>日付</label><input type="date" id="asf-date" min="${today()}"/></div>
+    <div style="font-size:12px;font-weight:500;color:var(--tx2);margin-bottom:6px">コマ設定</div>
+    <div id="asf-slot-list"></div>
+    <button class="btn btn-bl btn-sm" onclick="_addAsfRow()" style="margin-bottom:10px">＋ コマを追加</button>
+    <div class="err" id="asf-err"></div>
+    <div class="ma">
+      <button class="btn btn-gh" onclick="CM()">キャンセル</button>
+      <button class="btn btn-dk" onclick="doAdminAddShift()">追加・保存</button>
+    </div>`);
+  _addAsfRow();
+}
+let _asfRowId=0;
+function _addAsfRow(){
+  const rid=_asfRowId++;
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:6px';
+  row.innerHTML=`<input type="time" value="15:30" step="600" style="flex:1;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--r);font-size:13px;background:var(--bg)"/>
+    <span style="font-size:12px;color:var(--tx2)">〜</span>
+    <input type="time" value="16:20" step="600" style="flex:1;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--r);font-size:13px;background:var(--bg)"/>
+    <input type="text" placeholder="コマ名" style="flex:1;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--r);font-size:13px;background:var(--bg)"/>
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--rd);font-size:16px">×</button>`;
+  document.getElementById('asf-slot-list').appendChild(row);
+}
+function doAdminAddShift(){
+  const tid=document.getElementById('asf-tid').value;
+  const date=document.getElementById('asf-date').value;
+  if(!date){document.getElementById('asf-err').textContent='日付を選んでください';return;}
+  const d=pd(date);if(d.getDay()===0){document.getElementById('asf-err').textContent='日曜日は定休日のため追加できません';return;}
+  const rows=[...document.getElementById('asf-slot-list').children];
+  const slots=rows.map(row=>{
+    const inputs=row.querySelectorAll('input[type=time]');
+    const label=row.querySelector('input[type=text]').value.trim()||'コマ';
+    return{start:inputs[0].value,end:inputs[1].value,label};
+  }).filter(sl=>sl.start&&sl.end&&sl.start<sl.end);
+  if(!slots.length){document.getElementById('asf-err').textContent='有効なコマを1つ以上追加してください';return;}
+  slots.sort((a,b)=>a.start.localeCompare(b.start));
+  if(!schedules[tid])schedules[tid]={weeklyTemplate:{0:null,1:null,2:null,3:null,4:null,5:null,6:null},overrides:{}};
+  schedules[tid].overrides[date]=slots;
+  saveToStorage();CM();pgMgrSh(document.getElementById('ct'));
+}
+
+// ═══════════════════════════ ADMIN: RESERVE SLOT ═══════════════════════════
+function adminBookSlot(date,slotIdx,tid){
+  const t=tutors[tid];const slots=getTutorSlots(tid,date);const sl=slots[slotIdx];
+  if(!sl)return;
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>🔒 管理者予約</h3>
+    <p class="ms">${esc(t?.name||tid)} / ${date} ${sl.start}〜${sl.end}</p>
+    <div class="fg"><label>種別</label>
+      <select id="abk-type">
+        <option value="面談">面談</option>
+        <option value="会議">会議</option>
+        <option value="業務">業務</option>
+        <option value="その他">その他</option>
+      </select>
+    </div>
+    <div class="fg"><label>メモ（任意）</label><input type="text" id="abk-memo" placeholder="例: 保護者面談"/></div>
+    <div class="err" id="abk-err"></div>
+    <div class="ma">
+      <button class="btn btn-gh" onclick="CM()">キャンセル</button>
+      <button class="btn btn-bl" onclick="doAdminBook('${date}',${slotIdx},'${tid}')">予約する</button>
+    </div>`);
+}
+function doAdminBook(date,slotIdx,tid){
+  const type=document.getElementById('abk-type').value;
+  const memo=document.getElementById('abk-memo').value.trim();
+  // Check for existing reservation
+  if(adminReservations.find(r=>r.date===date&&r.slotIdx===slotIdx&&r.tutorId===tid)){
+    document.getElementById('abk-err').textContent='すでに管理者予約が入っています';return;
+  }
+  if(reservations.find(r=>r.date===date&&r.slotIdx===slotIdx&&r.tutorId===tid)){
+    document.getElementById('abk-err').textContent='生徒の予約が入っているため管理者予約できません';return;
+  }
+  adminReservations.push({id:adminResId++,date,slotIdx,tutorId:tid,adminType:type,isAdmin:true,memo,createdAt:new Date().toISOString()});
+  saveToStorage();CM();pgMgrSh(document.getElementById('ct'));
+}
+function cancelAdminRes(id){
+  if(!confirm('管理者予約を解除しますか？'))return;
+  adminReservations=adminReservations.filter(r=>r.id!==id);
+  saveToStorage();pgMgrSh(document.getElementById('ct'));
+}
+
+// ═══════════════════════════ ABSENCE MANAGEMENT ═══════════════════════════
+function cancelAbsence(tid,date){
+  if(!confirm(`${date} の欠勤を解除しますか？`))return;
+  if(schedules[tid]&&schedules[tid].overrides[date]==='absence'){
+    delete schedules[tid].overrides[date];
+  }
+  tutorAbsences=tutorAbsences.filter(a=>!(a.tutorId===tid&&a.date===date));
+  saveToStorage();pgMgrSh(document.getElementById('ct'));
+}
+
+// ═══════════════════════════ BULK TEMPLATE ASSIGN ═══════════════════════════
+function doBulkAssign(){
+  const tplId=document.getElementById('bulk-tpl').value;
+  if(!tplId){alert('テンプレートを選択してください');return;}
+  const tpl=scheduleTemplates.find(t=>t.id===tplId);
+  if(!tpl){alert('テンプレートが見つかりません');return;}
+  const tids=[...document.querySelectorAll('.bulk-tutor-cb:checked')].map(c=>c.value);
+  const dows=[...document.querySelectorAll('.bulk-dow-cb:checked')].map(c=>parseInt(c.value));
+  if(!tids.length){alert('指導者を1名以上選択してください');return;}
+  if(!dows.length){alert('曜日を1つ以上選択してください');return;}
+  tids.forEach(tid=>{
+    if(!schedules[tid])return;
+    dows.forEach(dow=>{
+      if(dow===0)return; // skip Sunday
+      schedules[tid].weeklyTemplate[dow]=tpl.slots.map(sl=>({...sl}));
+    });
+  });
+  saveToStorage();
+  alert(`${tids.length}名 × ${dows.length}曜日にテンプレート「${tpl.name}」を適用しました`);
+  pgMgrSh(document.getElementById('ct'));
+}
+
+// ═══════════════════════════ ADMIN: STUDENT DB ═══════════════════════════
+function pgMgrStu(C){
+  const fs=flatStudents();
+  const total=Object.keys(fs).length;
+  const grades=Object.keys(studentDB);
+
+  C.innerHTML=`
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+    <h3 style="font-size:15px;font-weight:700">生徒情報（全${total}名）</h3>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-bl btn-sm" onclick="mImportCSV()">📥 CSVインポート</button>
+      <button class="btn btn-gh btn-sm" onclick="exportCSV()">📤 CSVエクスポート</button>
+      <button class="btn btn-gn btn-sm" onclick="mAddGrade()">＋ 学年を追加</button>
+    </div>
+  </div>
+
+  <div style="font-size:12px;color:var(--tx2);background:var(--bl-l);border:1px solid var(--bl-b);border-radius:var(--r);padding:10px 14px;margin-bottom:14px">
+    💡 <strong>外部データ連携について：</strong>
+    CSVファイルで一括インポート／エクスポートができます。
+    将来的にはSupabase等のデータベースと連携することで、他システムとのリアルタイム同期も可能です。
+  </div>
+
+  <div class="grade-tree" id="grade-tree">
+    ${grades.map(grade=>`
+    <div class="grade-block" id="gb-${encodeURIComponent(grade)}">
+      <div class="grade-head" onclick="toggleGrade('${encodeURIComponent(grade)}')">
+        <h4>📚 ${esc(grade)}</h4>
+        <div style="display:flex;gap:7px;align-items:center">
+          <span class="bx bx-gy">${Object.values(studentDB[grade]).flat().length}名</span>
+          <button class="btn btn-bl btn-xs" onclick="event.stopPropagation();mAddClass('${encodeURIComponent(grade)}')">＋ クラス</button>
+          <button class="btn btn-rd btn-xs" onclick="event.stopPropagation();delGrade('${encodeURIComponent(grade)}')">削除</button>
+          <span style="font-size:14px;color:var(--tx3)">▼</span>
+        </div>
+      </div>
+      <div class="grade-body open" id="gbd-${encodeURIComponent(grade)}">
+        ${renderClassBlocks(grade)}
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+function toggleGrade(gk){
+  const b=document.getElementById('gbd-'+gk);
+  if(b)b.classList.toggle('open');
+}
+function renderClassBlocks(grade){
+  const cls=studentDB[grade];if(!cls)return'';
+  return Object.keys(cls).map(cn=>`
+  <div class="class-block">
+    <div class="class-head">
+      <span>🏫 ${esc(cn)}（${cls[cn].length}名）</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-gn btn-xs" onclick="mAddStudent('${encodeURIComponent(grade)}','${encodeURIComponent(cn)}')">＋ 生徒</button>
+        <button class="btn btn-rd btn-xs" onclick="delClass('${encodeURIComponent(grade)}','${encodeURIComponent(cn)}')">削除</button>
+      </div>
+    </div>
+    <div class="student-list">
+      ${cls[cn].map((s,i)=>`<div class="stu-item">
+        <div>
+          <div>${esc(s.name)}</div>
+          <div class="stu-id">${esc(s.id)}</div>
+        </div>
+        <button onclick="delStudent('${encodeURIComponent(grade)}','${encodeURIComponent(cn)}',${i})" style="background:none;border:none;cursor:pointer;color:var(--tx3);font-size:12px;margin-left:auto">×</button>
+      </div>`).join('')}
+    </div>
+  </div>`).join('');
+}
+function mAddGrade(){
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>学年を追加</h3>
+    <div class="fg"><label>学年名（例：1年、2年）</label><input type="text" id="ag-nm" placeholder="1年"/></div>
+    <div class="err" id="ag-e"></div>
+    <div class="ma"><button class="btn btn-gh" onclick="CM()">キャンセル</button><button class="btn btn-dk" onclick="doAddGrade()">追加</button></div>`);
+}
+function doAddGrade(){
+  const nm=document.getElementById('ag-nm').value.trim();
+  if(!nm){document.getElementById('ag-e').textContent='学年名を入力してください';return;}
+  if(studentDB[nm]){document.getElementById('ag-e').textContent='この学年はすでに存在します';return;}
+  studentDB[nm]={};CM();pgMgrStu(document.getElementById('ct'));
+}
+function delGrade(gk){
+  const g=decodeURIComponent(gk);
+  if(!confirm(`「${g}」を削除しますか？この学年の全生徒データも削除されます。`))return;
+  delete studentDB[g];pgMgrStu(document.getElementById('ct'));
+}
+function mAddClass(gk){
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>クラスを追加</h3>
+    <div class="fg"><label>クラス名（例：Aクラス、1組）</label><input type="text" id="ac-nm" placeholder="Aクラス"/></div>
+    <div class="err" id="ac-e"></div>
+    <div class="ma"><button class="btn btn-gh" onclick="CM()">キャンセル</button><button class="btn btn-dk" onclick="doAddClass('${gk}')">追加</button></div>`);
+}
+function doAddClass(gk){
+  const g=decodeURIComponent(gk);
+  const nm=document.getElementById('ac-nm').value.trim();
+  if(!nm){document.getElementById('ac-e').textContent='クラス名を入力してください';return;}
+  if(studentDB[g][nm]){document.getElementById('ac-e').textContent='このクラスはすでに存在します';return;}
+  studentDB[g][nm]=[];CM();pgMgrStu(document.getElementById('ct'));
+}
+function delClass(gk,ck){
+  const g=decodeURIComponent(gk);const cn=decodeURIComponent(ck);
+  if(!confirm(`「${g} ${cn}」を削除しますか？`))return;
+  delete studentDB[g][cn];pgMgrStu(document.getElementById('ct'));
+}
+function mAddStudent(gk,ck){
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>生徒を追加</h3>
+    <div class="fr">
+      <div class="fg"><label>生徒番号（ID）</label><input type="text" id="as-id" placeholder="s025"/></div>
+      <div class="fg"><label>氏名</label><input type="text" id="as-nm" placeholder="田中 花子"/></div>
+    </div>
+    <div class="err" id="as-e"></div>
+    <div class="ma"><button class="btn btn-gh" onclick="CM()">キャンセル</button><button class="btn btn-dk" onclick="doAddStudent('${gk}','${ck}')">追加</button></div>`);
+}
+function doAddStudent(gk,ck){
+  const g=decodeURIComponent(gk);const cn=decodeURIComponent(ck);
+  const id=document.getElementById('as-id').value.trim();
+  const nm=document.getElementById('as-nm').value.trim();
+  if(!id||!nm){document.getElementById('as-e').textContent='IDと氏名は必須です';return;}
+  const fs=flatStudents();
+  if(fs[id]){document.getElementById('as-e').textContent='この生徒番号はすでに使われています';return;}
+  studentDB[g][cn].push({id,name:nm});
+  CM();pgMgrStu(document.getElementById('ct'));
+}
+function delStudent(gk,ck,idx){
+  const g=decodeURIComponent(gk);const cn=decodeURIComponent(ck);
+  if(!confirm('この生徒を削除しますか？'))return;
+  studentDB[g][cn].splice(idx,1);pgMgrStu(document.getElementById('ct'));
+}
+
+// CSV Import/Export
+function exportCSV(){
+  const rows=[['学年','クラス','生徒番号','氏名']];
+  Object.entries(studentDB).forEach(([grade,cls])=>
+    Object.entries(cls).forEach(([cn,arr])=>
+      arr.forEach(s=>rows.push([grade,cn,s.id,s.name]))));
+  const csv=rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='students.csv';a.click();
+}
+function mImportCSV(){
+  showModal(`<button class="mc" onclick="CM()">×</button>
+    <h3>CSVインポート</h3>
+    <p class="ms">「学年,クラス,生徒番号,氏名」の形式でインポートします</p>
+    <div style="font-size:12px;color:var(--tx2);background:var(--sf2);border-radius:var(--r);padding:10px;margin-bottom:12px;font-family:var(--mn)">
+      ヘッダー行: 学年,クラス,生徒番号,氏名<br>
+      例: 1年,Aクラス,s001,田中 花子
+    </div>
+    <div class="fg"><label>CSVファイル</label><input type="file" id="csv-f" accept=".csv"/></div>
+    <div style="margin-top:8px;font-size:12px;color:var(--tx2)">または直接貼り付け：</div>
+    <div class="fg" style="margin-top:6px"><textarea id="csv-t" rows="5" placeholder="1年,Aクラス,s031,昭和 太郎&#10;1年,Bクラス,s032,令和 花子"></textarea></div>
+    <div class="err" id="csv-e"></div>
+    <div class="ma">
+      <button class="btn btn-gh" onclick="CM()">キャンセル</button>
+      <button class="btn btn-dk" onclick="doImportCSV()">インポート</button>
+    </div>`);
+  document.getElementById('csv-f').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();r.onload=ev=>{document.getElementById('csv-t').value=ev.target.result;};r.readAsText(f,'UTF-8');
+  });
+}
+function doImportCSV(){
+  const raw=document.getElementById('csv-t').value.trim();
+  if(!raw){document.getElementById('csv-e').textContent='データを入力してください';return;}
+  const lines=raw.split('\n').map(l=>l.trim()).filter(l=>l);
+  let added=0,skipped=0;
+  const fs=flatStudents();
+  lines.forEach(line=>{
+    const cols=line.split(',').map(c=>c.trim().replace(/^"|"$/g,''));
+    if(cols.length<4)return;
+    const [grade,cn,id,name]=cols;
+    if(!grade||!cn||!id||!name){skipped++;return;}
+    if(grade==='学年'){return;} // header row
+    if(fs[id]){skipped++;return;}
+    if(!studentDB[grade])studentDB[grade]={};
+    if(!studentDB[grade][cn])studentDB[grade][cn]=[];
+    studentDB[grade][cn].push({id,name});
+    fs[id]={id,name};
+    added++;
+  });
+  saveToStorage();CM();pgMgrStu(document.getElementById('ct'));
+  setTimeout(()=>alert(`インポート完了：${added}件追加、${skipped}件スキップ`),100);
+}
+
+// ═══════════════════════════ LOGIN LOGS ═══════════════════════════
+let _llF={role:'',uid:'',nm:'',gr:'',kl:'',df:'',dt:''};
+let _llSort='loginAt';
+let _llSortDir='desc';
+
+function llSave(){
+  _llF.role=document.getElementById('llf-role')?.value||'';
+  _llF.uid=(document.getElementById('llf-uid')?.value||'').trim();
+  _llF.nm=(document.getElementById('llf-nm')?.value||'').trim();
+  _llF.gr=(document.getElementById('llf-gr')?.value||'').trim();
+  _llF.kl=(document.getElementById('llf-kl')?.value||'').trim();
+  _llF.df=document.getElementById('llf-df')?.value||'';
+  _llF.dt=document.getElementById('llf-dt')?.value||'';
+}
+function llFiltered(){
+  return loginLogs.filter(l=>{
+    if(_llF.role&&l.role!==_llF.role)return false;
+    if(_llF.uid&&!l.userId.toLowerCase().includes(_llF.uid.toLowerCase()))return false;
+    if(_llF.nm&&!l.name.includes(_llF.nm))return false;
+    if(_llF.gr&&!(l.grade||'').includes(_llF.gr))return false;
+    if(_llF.kl&&!(l.klass||'').includes(_llF.kl))return false;
+    if(_llF.df&&l.loginAt.slice(0,10)<_llF.df)return false;
+    if(_llF.dt&&l.loginAt.slice(0,10)>_llF.dt)return false;
+    return true;
+  });
+}
+function llSorted(){
+  const fl=llFiltered();
+  return [...fl].sort((a,b)=>{
+    const av=String(a[_llSort]||'');
+    const bv=String(b[_llSort]||'');
+    const r=av.localeCompare(bv,'ja');
+    return _llSortDir==='asc'?r:-r;
+  });
+}
+function llSetSort(col){
+  if(_llSort===col){_llSortDir=_llSortDir==='asc'?'desc':'asc';}
+  else{_llSort=col;_llSortDir=col==='loginAt'?'desc':'asc';}
+  pgLL(document.getElementById('ct'));
+}
+function llSortIcon(col){
+  if(_llSort!==col)return'<span style="opacity:.3;font-size:10px">↕</span>';
+  return _llSortDir==='asc'?'<span style="font-size:10px;color:var(--gr)">↑</span>':'<span style="font-size:10px;color:var(--gr)">↓</span>';
+}
+function llDateLabel(ds){
+  if(!ds)return'';
+  const d=pd(ds);
+  return `${ds.replace(/-/g,'/')}（${WD[d.getDay()]}）`;
+}
+function pgLL(C){
+  const fl=llSorted();
+  const dfLabel=llDateLabel(_llF.df);
+  const dtLabel=llDateLabel(_llF.dt);
+  C.innerHTML=`
+  <div class="card" style="margin-bottom:14px">
+    <div class="ch"><h3>🔎 絞り込み</h3><span style="font-size:12px;color:var(--tx2)">各項目は部分一致・単独でも有効</span></div>
+    <div class="cb">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;align-items:end">
+        <div class="fg" style="margin:0"><label>ロール</label>
+          <select id="llf-role">
+            <option value="">全て</option>
+            <option value="生徒" ${_llF.role==='生徒'?'selected':''}>生徒</option>
+            <option value="指導者" ${_llF.role==='指導者'?'selected':''}>指導者</option>
+            <option value="管理者" ${_llF.role==='管理者'?'selected':''}>管理者</option>
+          </select>
+        </div>
+        <div class="fg" style="margin:0"><label>ユーザーID</label><input type="text" id="llf-uid" value="${esc(_llF.uid)}" placeholder="部分一致（大文字小文字不問）"/></div>
+        <div class="fg" style="margin:0"><label>名前</label><input type="text" id="llf-nm" value="${esc(_llF.nm)}" placeholder="部分一致"/></div>
+        <div class="fg" style="margin:0"><label>学年</label><input type="text" id="llf-gr" value="${esc(_llF.gr)}" placeholder="例: 1年"/></div>
+        <div class="fg" style="margin:0"><label>クラス</label><input type="text" id="llf-kl" value="${esc(_llF.kl)}" placeholder="例: Aクラス"/></div>
+        <div class="fg" style="margin:0">
+          <label>開始日${dfLabel?`<span style="font-size:11px;color:var(--bl);margin-left:6px">${esc(dfLabel)}</span>`:''}</label>
+          <input type="date" id="llf-df" value="${_llF.df}" onchange="llSave();pgLL(document.getElementById('ct'))"/>
+        </div>
+        <div class="fg" style="margin:0">
+          <label>終了日${dtLabel?`<span style="font-size:11px;color:var(--bl);margin-left:6px">${esc(dtLabel)}</span>`:''}</label>
+          <input type="date" id="llf-dt" value="${_llF.dt}" onchange="llSave();pgLL(document.getElementById('ct'))"/>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-end">
+          <button class="btn btn-gn" onclick="llSave();pgLL(document.getElementById('ct'))">絞り込む</button>
+          <button class="btn btn-gh" onclick="_llF={role:'',uid:'',nm:'',gr:'',kl:'',df:'',dt:''};_llSort='loginAt';_llSortDir='desc';pgLL(document.getElementById('ct'))">リセット</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch">
+      <h3>ログイン履歴（${fl.length} / ${loginLogs.length} 件）</h3>
+      <button class="btn btn-gh btn-sm" onclick="exportLL()">📥 CSVエクスポート</button>
+    </div>
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr>
+      <th onclick="llSetSort('loginAt')" style="cursor:pointer;white-space:nowrap">日時 ${llSortIcon('loginAt')}</th>
+      <th onclick="llSetSort('userId')" style="cursor:pointer;white-space:nowrap">ユーザーID ${llSortIcon('userId')}</th>
+      <th onclick="llSetSort('name')" style="cursor:pointer;white-space:nowrap">名前 ${llSortIcon('name')}</th>
+      <th onclick="llSetSort('grade')" style="cursor:pointer;white-space:nowrap">学年 ${llSortIcon('grade')}</th>
+      <th onclick="llSetSort('klass')" style="cursor:pointer;white-space:nowrap">クラス ${llSortIcon('klass')}</th>
+      <th onclick="llSetSort('role')" style="cursor:pointer;white-space:nowrap">ロール ${llSortIcon('role')}</th>
+    </tr></thead>
+    <tbody>${fl.length===0?`<tr><td colspan="6" style="text-align:center;color:var(--tx2);padding:20px">該当なし</td></tr>`:
+    fl.map(l=>{
+      const d=new Date(l.loginAt);
+      const dateStr=`${d.getFullYear()}/${z(d.getMonth()+1)}/${z(d.getDate())}（${WD[d.getDay()]}）`;
+      const timeStr=`${z(d.getHours())}:${z(d.getMinutes())}`;
+      return`<tr>
+        <td style="font-family:var(--mn);font-size:12px;white-space:nowrap">${dateStr} ${timeStr}</td>
+        <td style="font-family:var(--mn)">${esc(l.userId)}</td>
+        <td>${esc(l.name)}</td>
+        <td style="font-size:12px">${esc(l.grade||'—')}</td>
+        <td style="font-size:12px">${esc(l.klass||'—')}</td>
+        <td><span class="bx ${l.role==='管理者'?'bx-rd':l.role==='指導者'?'bx-gn':'bx-gy'}">${l.role}</span></td>
+      </tr>`;
+    }).join('')}
+    </tbody></table></div>
+  </div>`;
+}
+function exportLL(){
+  const fl=llSorted();
+  const rows=[['日時','曜日','ユーザーID','名前','学年','クラス','ロール']];
+  fl.forEach(l=>{
+    const d=new Date(l.loginAt);
+    rows.push([fdt(l.loginAt),WD[d.getDay()],l.userId,l.name,l.grade||'',l.klass||'',l.role]);
+  });
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`login_history_${today()}.csv`;a.click();
+}
+
+// ═══════════════════════════ MODAL ═══════════════════════════
+function showModal(h){document.getElementById('modal').innerHTML=h;document.getElementById('ov').style.display='flex';}
+function CM(){document.getElementById('ov').style.display='none';}
+function ovClose(e){if(e.target===document.getElementById('ov'))CM();}
+// ── 起動時にlocalStorageから復元 ──
+loadFromStorage();
+</script>
+</body>
+</html>
